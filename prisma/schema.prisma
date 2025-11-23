@@ -6,8 +6,7 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql" 
-  url      = env("DATABASE_URL")
+  provider = "postgresql"
 }
 
 // Enums for better type safety
@@ -311,7 +310,7 @@ model Lesson {
   course_id   String
   title       String
   description String?  @db.Text
-  content     String?  @db.LongText // HTML content or markdown
+  content     String?  @db.Text // HTML content or markdown
   video_url   String?  // URL to recorded video
   video_type  String   @default("youtube") // youtube, vimeo, direct, etc.
   video_id    String?  // Video ID for platforms like YouTube/Vimeo
@@ -357,7 +356,7 @@ model Review {
   user_id   String
   course_id String?
   event_id  String?
-  rating    Int      @db.TinyInt // 1-5 stars
+  rating    Int      // 1-5 stars
   comment   String?  @db.Text
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
