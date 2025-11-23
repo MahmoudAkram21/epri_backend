@@ -1,0 +1,6 @@
+# This file keeps the certs directory in git
+# Place your SSL certificates here:
+# - cert.pem (SSL certificate)
+# - key.pem (Private key)
+# - ca.pem (Optional: CA certificate)
+

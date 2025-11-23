@@ -1,0 +1,4 @@
+import "dotenv/config";
+
+// This file ensures that environment variables from .env are loaded
+// when running Prisma commands and when the application starts

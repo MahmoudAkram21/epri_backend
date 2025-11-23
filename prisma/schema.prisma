@@ -1,0 +1,649 @@
+// Egyptian Petroleum Research Institute - Database Schema
+// Enhanced Prisma schema for EPRI event management and research platform
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql" 
+  url      = env("DATABASE_URL")
+}
+
+// Enums for better type safety
+enum PaymentStatus {
+  PENDING
+  PAID
+  CANCELLED
+  REFUNDED
+}
+
+enum TicketStatus {
+  ACTIVE
+  USED
+  CANCELLED
+  EXPIRED
+}
+
+enum UserRole {
+  STUDENT
+  RESEARCHER
+  INSTRUCTOR
+  ADMIN
+  GUEST
+}
+
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  CANCELLED
+  COMPLETED
+}
+
+enum CourseDeliveryType {
+  ONLINE
+  OFFLINE
+  HYBRID
+}
+
+// System Settings
+model SystemSetting {
+  id          String   @id @default(uuid())
+  key         String   @unique
+  value       String   @db.Text
+  description String?
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+  
+  @@map("system_setting")
+}
+
+// Simple Website Visit Counter
+model SiteVisit {
+  id         String   @id @default(uuid())
+  session_id String   // Unique session identifier
+  page_path  String   // Page path visited (e.g., "/", "/about")
+  visited_at DateTime @default(now())
+  
+  @@unique([session_id, page_path]) // Prevent duplicate counts per session per page
+  @@map("site_visit")
+}
+
+// Website statistics summary
+model SiteStats {
+  id            String   @id @default(uuid())
+  total_visits  Int      @default(0)
+  unique_sessions Int    @default(0)
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+  
+  @@map("site_stats")
+}
+
+// User Management
+model User {
+  id            String   @id @default(uuid())
+  first_name    String
+  last_name     String
+  email         String   @unique
+  phone         String?
+  password_hash String?
+  role          UserRole @default(STUDENT)
+  is_verified   Boolean  @default(false)
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+  
+  // Relations
+  event_orders  EventOrder[]
+  tickets       Ticket[]
+  enrollments   CourseEnrollment[]
+  reviews       Review[]
+  
+  @@map("user")
+}
+
+// Event Categories
+model Category {
+  id          String   @id @default(uuid())
+  title       String   @unique
+  description String?
+  color       String?  // For UI theming
+  icon        String?  // Icon identifier
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+  
+  // Relations
+  events EventCategory[]
+  
+  @@map("category")
+}
+
+// Events/Conferences/Symposiums
+model Event {
+  id              String      @id @default(uuid())
+  title           String
+  description     String?     @db.Text
+  start_date      DateTime
+  end_date        DateTime?
+  price           Decimal     @default(0) @db.Decimal(8, 2)
+  capacity        Int         @default(100)
+  status          EventStatus @default(DRAFT)
+  featured        Boolean     @default(false)
+  registration_open Boolean   @default(true)
+  is_conference   Boolean     @default(false)  // Marks if this event is a conference
+  cover_image     String?     // Cover image URL for the event/conference
+  agenda          Json?                  // Conference agenda/schedule as JSON
+  guidelines      String?     @db.Text  // Guidelines for attendees
+  created_at      DateTime    @default(now())
+  updated_at      DateTime    @updatedAt
+  
+  // Relations
+  address_id      String?
+  categories      EventCategory[]
+  speakers        Speaker[]
+  address         Address? @relation(fields: [address_id], references: [id])
+  tickets         Ticket[]
+  orders          EventOrder[]
+  
+  @@map("event")
+}
+
+// Junction table for Event-Category many-to-many relationship
+model EventCategory {
+  id          String   @id @default(uuid())
+  event_id    String
+  category_id String
+  created_at  DateTime @default(now())
+  
+  // Relations
+  event    Event    @relation(fields: [event_id], references: [id], onDelete: Cascade)
+  category Category @relation(fields: [category_id], references: [id], onDelete: Cascade)
+  
+  @@unique([event_id, category_id])
+  @@map("event_category")
+}
+
+// Event Speakers/Presenters
+model Speaker {
+  id          String   @id @default(uuid())
+  name        String
+  title       String   // Job title/position
+  bio         String?  @db.Text
+  picture     String?  // Profile image URL
+  topics      Json?    // Array of topics as JSON
+  expertise   String?  // Research areas
+  institution String?  // University/Organization
+  linkedin    String?
+  twitter     String?
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+  
+  // Relations
+  events Event[]
+  
+  @@map("speaker")
+}
+
+// Event Address/Location
+model Address {
+  id        String   @id @default(uuid())
+  title     String   // Venue name
+  line_1    String   // Street address
+  line_2    String?  // Additional address info
+  city      String
+  state     String?
+  country   String   @default("Egypt")
+  postal_code String?
+  map_link  String?  // Google Maps or other map service URL
+  latitude  Float?
+  longitude Float?
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  
+  // Relations
+  events Event[]
+  
+  @@map("address")
+}
+
+// Event Orders/Registrations
+model EventOrder {
+  id             String        @id @default(uuid())
+  user_id        String
+  event_id       String
+  payment_status PaymentStatus @default(PENDING)
+  total_amount   Decimal       @db.Decimal(8, 2)
+  payment_method String?
+  transaction_id String?       // Payment gateway transaction tract
+  receipt_url    String?       // Receipt file upload URL
+  verified_at    DateTime?     // When payment was verified by admin
+  created_at     DateTime      @default(now())
+  updated_at     DateTime      @updatedAt
+  
+  // Relations
+  user  User  @relation(fields: [user_id], references: [id])
+  event Event @relation(fields: [event_id], references: [id])
+  
+  @@map("event_order")
+}
+
+// Digital Tickets
+model Ticket {
+  id            String      @id @default(uuid())
+  ticket_number String      @unique
+  user_id       String
+  event_id      String
+  ticket_type   String      @default("GENERAL") // GENERAL, VIP, STUDENT, etc.
+  ticket_price  Decimal     @db.Decimal(8, 2)
+  ticket_status TicketStatus @default(ACTIVE)
+  qr_code       String?     // QR code data for scanning
+  used_at       DateTime?   // When ticket was used/checked-in
+  created_at    DateTime    @default(now())
+  updated_at    DateTime    @updatedAt
+  
+  // Relations
+  user  User  @relation(fields: [user_id], references: [id])
+  event Event @relation(fields: [event_id], references: [id])
+  
+  @@map("ticket")
+}
+
+// Course Management (Enhanced for EPRI)
+model Course {
+  id              String   @id @default(uuid())
+  title           String
+  subtitle        String?
+  description     String?  @db.Text
+  image           String?  // Course cover image
+  instructor_id   String?  // Reference to User with INSTRUCTOR role
+  instructor_name String?  // Instructor name for display
+  category        String   @default("General")
+  price           Decimal  @default(0) @db.Decimal(8, 2)
+  is_free         Boolean  @default(false)
+  duration_hours  Int      @default(0)
+  duration_weeks  Int      @default(0)
+  level           String   @default("BEGINNER") // BEGINNER, INTERMEDIATE, ADVANCED
+  language        String   @default("English")
+  max_students    Int      @default(50)
+  is_published    Boolean  @default(false)
+  is_featured     Boolean  @default(false)
+  
+  // Delivery Type and Location
+  delivery_type   CourseDeliveryType @default(ONLINE)
+  meeting_location String?  // Physical location for offline/hybrid courses
+  room_number     String?  // Room number for offline courses
+  building        String?  // Building name for offline courses
+  address         String?  @db.Text // Full address for offline courses
+  zoom_link       String?  // Zoom/meeting link for online courses
+  meeting_id      String?  // Meeting ID for online courses
+  meeting_passcode String? // Meeting passcode for online courses
+  platform        String?  // Platform used (Zoom, Teams, Google Meet, etc.)
+  
+  // Schedule
+  start_date      DateTime?
+  end_date        DateTime?
+  schedule_info   String?  @db.Text // Additional schedule information
+  time_zone       String   @default("UTC")
+  
+  // Learning Objectives and Requirements
+  objectives      Json?    // Array of learning objectives
+  requirements    Json?    // Array of prerequisites
+  
+  // Stats
+  rating_average  Float    @default(0.0)
+  rating_count    Int      @default(0)
+  enrollment_count Int     @default(0)
+  
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+  
+  // Relations
+  enrollments CourseEnrollment[]
+  lessons     Lesson[]
+  reviews     Review[]
+  
+  @@map("course")
+}
+
+// Course Lessons (Enhanced for recorded content)
+model Lesson {
+  id          String   @id @default(uuid())
+  course_id   String
+  title       String
+  description String?  @db.Text
+  content     String?  @db.LongText // HTML content or markdown
+  video_url   String?  // URL to recorded video
+  video_type  String   @default("youtube") // youtube, vimeo, direct, etc.
+  video_id    String?  // Video ID for platforms like YouTube/Vimeo
+  duration    Int      @default(0) // Duration in minutes
+  order_index Int      @default(0)
+  is_free     Boolean  @default(false)
+  is_preview  Boolean  @default(false) // Can be watched without enrollment
+  
+  // Additional resources
+  attachments Json?    // Array of file attachments
+  quiz_data   Json?    // Quiz questions for the lesson
+  notes       String?  @db.Text // Lesson notes or transcript
+  
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+  
+  // Relations
+  course Course @relation(fields: [course_id], references: [id], onDelete: Cascade)
+  
+  @@map("lesson")
+}
+
+// Course Enrollments
+model CourseEnrollment {
+  id         String   @id @default(uuid())
+  user_id    String
+  course_id  String
+  enrolled_at DateTime @default(now())
+  completed_at DateTime?
+  progress   Int      @default(0) // Percentage completed
+  
+  // Relations
+  user   User   @relation(fields: [user_id], references: [id])
+  course Course @relation(fields: [course_id], references: [id])
+  
+  @@unique([user_id, course_id])
+  @@map("course_enrollment")
+}
+
+// Reviews and Ratings
+model Review {
+  id        String   @id @default(uuid())
+  user_id   String
+  course_id String?
+  event_id  String?
+  rating    Int      @db.TinyInt // 1-5 stars
+  comment   String?  @db.Text
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  
+  // Relations
+  user   User    @relation(fields: [user_id], references: [id])
+  course Course? @relation(fields: [course_id], references: [id])
+  
+  @@map("review")
+}
+
+model Department {
+  id String @id @default(uuid())
+  name String 
+  description String? @db.Text
+  image String?
+  icon String?
+  manager_id String?
+  // Relation to section
+  section_id String?
+  section    DepartmentSection? @relation(fields: [section_id], references: [id])
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  
+  // Relations
+  staff        DepartmentStaff[]
+  laboratories Laboratory[]
+  
+  @@map("department")
+}
+
+
+// High-level sections that group departments (e.g., Exploration, Production, etc.)
+model DepartmentSection {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  slug        String   @unique
+  order_index Int      @default(0)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  // Relations
+  departments  Department[]
+  laboratories Laboratory[]
+
+  @@map("department_section")
+}
+
+
+model DepartmentStaff {
+  id String @id @default(uuid())
+  department_id String
+  staff_id String
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  
+  // Relations
+  department Department @relation(fields: [department_id], references: [id], onDelete: Cascade)
+  staff      Staff      @relation(fields: [staff_id], references: [id], onDelete: Cascade)
+  
+  @@unique([department_id, staff_id])
+  @@map("department_staff")
+}
+
+model Staff {
+  id String @id @default(uuid())
+  name String
+  title String // Academic Position
+  academic_position String? // Prof., Dr., Eng., etc.
+  current_admin_position String? // Current Administrative Position
+  ex_admin_position String? // Ex-Administrative Position
+  scientific_name String? // Scientific Name (different from display name)
+  picture String? // Main profile picture
+  gallery Json? // Array of additional images
+  bio String? @db.Text
+  research_interests String? @db.Text
+  news String? @db.Text // Staff news/announcements
+  
+  // Contact Information
+  email String?
+  alternative_email String?
+  phone String?
+  mobile String?
+  website String?
+  
+  // Academic Links
+  google_scholar String?
+  research_gate String?
+  academia_edu String?
+  linkedin String?
+  facebook String?
+  twitter String?
+  google_plus String?
+  youtube String?
+  wordpress String?
+  instagram String?
+  mendeley String?
+  zotero String?
+  evernote String?
+  orcid String?
+  scopus String?
+  
+  // Publication Stats
+  publications_count Int @default(0)
+  papers_count Int @default(0)
+  abstracts_count Int @default(0)
+  courses_files_count Int @default(0)
+  inlinks_count Int @default(0)
+  external_links_count Int @default(0)
+  
+  // Organizational Info
+  faculty String?
+  department String?
+  office_location String?
+  office_hours String?
+  
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  
+  // Relations
+  departments DepartmentStaff[]
+  
+  @@map("staff")
+}
+
+// Laboratory Models
+model Laboratory {
+  id String @id @default(uuid())
+  name String
+  description String? @db.Text
+  image String? // Main laboratory image
+  
+  // Head of Laboratory Information
+  head_name String? // e.g., "Prof. Dr. Mostafa Gouda Mohamed"
+  head_title String? // e.g., "Head of The Laboratory"
+  head_academic_title String? // e.g., "Prof. Dr."
+  head_picture String? // Head's profile picture
+  head_cv_url String? // Link to full CV
+  head_email String? // e.g., "gouda250@yahoo.com"
+  head_bio String? @db.Text // Biography of the head
+  
+  // Contact Information
+  address String? // e.g., "1 Ahmed El-Zomor Street, El Zohour Region, Nasr city, Cairo"
+  phone String? // e.g., "+(202)22747847"
+  alternative_phone String? // e.g., "+(202)22747433"
+  fax String?
+  email String? // Laboratory general email
+  website String?
+  
+  // Laboratory Details
+  established_year Int?
+  facilities String? @db.Text // Description of facilities
+  equipment_list String? @db.Text // List of major equipment
+  research_areas String? @db.Text // Research focus areas
+  services_offered String? @db.Text // Services the lab provides
+  staff_count Int @default(0)
+  students_count Int @default(0)
+  
+  // Organizational Info
+  department_id String? // Link to department if applicable
+  section_id String? // Link to section if applicable
+  building String? // Building location
+  floor String? // Floor number
+  room_numbers String? // Room numbers
+  
+  // Status and Visibility
+  is_active Boolean @default(true)
+  is_featured Boolean @default(false)
+  display_order Int @default(0)
+  
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  
+  // Relations
+  department Department? @relation(fields: [department_id], references: [id])
+  section DepartmentSection? @relation(fields: [section_id], references: [id])
+  
+  @@map("laboratory")
+}
+
+// Services Models
+model Service {
+  id String @id @default(uuid())
+  title String
+  subtitle String?
+  description String? @db.Text
+  image String?
+  category String
+  icon String?
+  features Json? // Array of features as JSON
+  duration String?
+  price Decimal? @default(0) @db.Decimal(8, 2)
+  is_free Boolean @default(false)
+  is_featured Boolean @default(false)
+  is_published Boolean @default(true)
+  center_head_id String?
+  group_name String? // For organizing services into groups/tabs
+  group_order Int? @default(0) // Order within group
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  
+  // Relations
+  center_head ServiceCenterHead? @relation(fields: [center_head_id], references: [id])
+  equipment ServiceEquipment[]
+  tabs ServiceTab[]
+  
+  @@map("service")
+}
+
+model ServiceTab {
+  id String @id @default(uuid())
+  service_id String
+  title String
+  content String @db.Text
+  order_index Int @default(0)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  
+  // Relations
+  service Service @relation(fields: [service_id], references: [id], onDelete: Cascade)
+  
+  @@map("service_tab")
+}
+
+model ServiceCenterHead {
+  id String @id @default(uuid())
+  name String
+  title String
+  picture String?
+  bio String? @db.Text
+  email String?
+  phone String?
+  expertise Json? // Array of expertise areas as JSON
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  
+  // Relations
+  services Service[]
+  
+  @@map("service_center_head")
+}
+
+model ServiceEquipment {
+  id String @id @default(uuid())
+  serviceId String? @map("service_id")
+  serviceCenterId String? @map("service_center_id")
+  name String
+  description String? @db.Text
+  image String?
+  specifications Json? // Array of specifications as JSON
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  
+  // Relations
+  service Service? @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  serviceCenter ServiceCenter? @relation(fields: [serviceCenterId], references: [id], onDelete: Cascade)
+  
+  @@map("service_equipment")
+}
+
+model ServiceCenter {
+  id String @id @default(uuid())
+  name String
+  slug String @unique
+  type String @default("center") // "center" or "unit"
+  headline String?
+  description String? @db.Text
+  image String?
+  banner_image String?
+  location String?
+  contact_phone String?
+  contact_email String?
+  products Json? // Array of products (hidden when empty on frontend)
+  lab_methodology String? @db.Text
+  work_volume Json? // Chart data for work volume e.g. { totalIncomeRate, dataPoints: [] }
+  company_activity Json? // Chart data for company activity
+  future_prospective String? @db.Text
+  services Json? // Array of services/offers summary
+  metrics Json? // Additional KPIs or stats
+  is_featured Boolean @default(false)
+  is_published Boolean @default(true)
+  order_index Int @default(0)
+  equipments ServiceEquipment[]
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@map("service_center")
+}
