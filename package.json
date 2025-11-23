@@ -4,6 +4,7 @@
   "description": "Backend API for EPRI - Express.js with Prisma ORM",
   "main": "dist/server-auth.js",
   "scripts": {
+    "postinstall": "npx prisma generate",
     "dev": "nodemon src/server-auth.ts",
     "dev:clean": "nodemon src/server-clean.ts",
     "dev:simple": "nodemon src/server-minimal.ts",
