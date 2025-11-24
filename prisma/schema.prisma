@@ -2,11 +2,11 @@
 // Enhanced Prisma schema for EPRI event management and research platform
 
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client-js" 
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
 }
 
 // Enums for better type safety
