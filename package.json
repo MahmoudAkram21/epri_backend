@@ -4,7 +4,6 @@
   "description": "Backend API for EPRI - Express.js with Prisma ORM",
   "main": "dist/server-auth.js",
   "scripts": {
-    "postinstall": "npx prisma generate",
     "dev": "nodemon src/server-auth.ts",
     "dev:clean": "nodemon src/server-clean.ts",
     "dev:simple": "nodemon src/server-minimal.ts",
@@ -31,7 +30,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@prisma/client": "^7.0.0",
+    "@prisma/client": "^6.19.0",
     "@reduxjs/toolkit": "^2.9.2",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
@@ -57,11 +56,8 @@
     "eslint": "^9.18.0",
     "nodemon": "^3.1.9",
     "prettier": "^3.4.2",
-    "prisma": "^7.0.0",
+    "prisma": "^6.19.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.7.2"
-  },
-  "prisma": {
-    "seed": "node -r dotenv/config -r ts-node/register prisma/seed.ts"
   }
 }

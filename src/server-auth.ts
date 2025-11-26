@@ -3,15 +3,14 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { PrismaClient } from '@prisma/client';
 import { createHttpsServer, isHttpsEnabled } from './https-server';
+import { prisma } from './lib/prisma';
 
 // Load environment variables
 dotenv.config();
 
 const app = express();
 const port = process.env.PORT ? parseInt(process.env.PORT, 10) : 3002;
-const prisma = new PrismaClient();
 
 // Helper functions for service centers
 const slugify = (value: string): string =>
