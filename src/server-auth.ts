@@ -166,7 +166,6 @@ const allowedOrigins = [
   'http://localhost:3000',
   'http://localhost:3002',
   'https://localhost:3000',
-  'https://epri.developteam.site/'
 ].filter(Boolean) as string[];
 
 app.use(cors({
@@ -200,7 +199,10 @@ app.use(cors({
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  exposedHeaders: ['Content-Length', 'X-Foo', 'X-Bar'],
+  preflightContinue: false,
+  optionsSuccessStatus: 204
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
