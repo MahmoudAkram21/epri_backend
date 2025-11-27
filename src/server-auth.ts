@@ -169,6 +169,43 @@ const allowedOrigins = [
   'https://localhost:3000',
 ].filter(Boolean) as string[];
 
+// Handle OPTIONS preflight requests explicitly
+app.options('*', cors({
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps, Postman, or curl requests)
+    if (!origin) return callback(null, true);
+    
+    // Check if origin is in allowed list
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      // For deployment, allow same domain with different protocol/port
+      try {
+        const originUrl = new URL(origin);
+        const isSameDomain = originUrl.hostname === 'epri.developteam.site' || 
+                            originUrl.hostname === 'localhost' ||
+                            originUrl.hostname === '127.0.0.1';
+        
+        if (isSameDomain) {
+          callback(null, true);
+        } else {
+          console.warn(`CORS blocked origin: ${origin}`);
+          callback(new Error('Not allowed by CORS'));
+        }
+      } catch (error) {
+        // Invalid URL format
+        console.warn(`CORS blocked invalid origin: ${origin}`);
+        callback(new Error('Not allowed by CORS'));
+      }
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  exposedHeaders: ['Content-Length', 'X-Foo', 'X-Bar'],
+  optionsSuccessStatus: 204
+}));
+
 app.use(cors({
   origin: (origin, callback) => {
     // Allow requests with no origin (like mobile apps, Postman, or curl requests)
@@ -474,7 +511,11 @@ app.get('/api/auth/verify', async (req, res) => {
 });
 
 // Authentication middleware
+// Skip authentication for OPTIONS requests (CORS preflight)
 const authenticateToken = async (req: express.Request, res: express.Response, next: express.NextFunction): Promise<void> => {
+  if (req.method === 'OPTIONS') {
+    return next();
+  }
   try {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
