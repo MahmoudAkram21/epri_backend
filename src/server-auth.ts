@@ -3,6 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import os from 'os';
 import { createHttpsServer, isHttpsEnabled } from './https-server';
 import { prisma } from './lib/prisma';
 
@@ -4153,14 +4154,34 @@ if (isHttpsEnabled()) {
       console.log(`🌐 Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:3000'}`);
     });
   }
+
+  
 } else {
   // Start HTTP server (default)
+
+  
   app.listen(port, () => {
+    
+    
     console.log(`🚀 Server running on HTTP port ${port}`);
     console.log(`🌐 Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:3000'}`);
   });
 }
 
+const networkInterfaces = os.networkInterfaces();
+
+  let ip = "localhost"; // fallback
+
+  for (const iface of Object.values(networkInterfaces)) {
+    if (iface && Array.isArray(iface)) {
+      for (const config of iface) {
+        if (config.family === "IPv4" && !config.internal) {
+          ip = config.address;
+        }
+      }
+    }
+  }
+console.log(`🚀 Server running on HTTP port ${port} mahmoud on http://${ip}:${port}`);
 console.log(`🔐 Auth endpoints ready: /api/auth/*`);
 console.log(`🏢 Department endpoints ready: /api/departments, /api/department-sections`);
 console.log(`🔧 Services endpoints ready: /api/services, /api/admin/services, /api/service-center-heads`);
