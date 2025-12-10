@@ -2521,12 +2521,12 @@ async function main() {
           ? typeof lessonData.content === "string"
             ? JSON.parse(lessonData.content)
             : lessonData.content
-          : Prisma.JsonNull,
+          : null,
         notes: (lessonData as any).notes
           ? typeof (lessonData as any).notes === "string"
             ? toJson((lessonData as any).notes, (lessonData as any).notes)
             : (lessonData as any).notes
-          : Prisma.JsonNull,
+          : null,
         attachments: lessonData.attachments
           ? JSON.parse(lessonData.attachments)
           : null,
@@ -2549,12 +2549,12 @@ async function main() {
           ? typeof lessonData.content === "string"
             ? JSON.parse(lessonData.content)
             : lessonData.content
-          : Prisma.JsonNull,
+          : null,
         notes: (lessonData as any).notes
           ? typeof (lessonData as any).notes === "string"
             ? toJson((lessonData as any).notes, (lessonData as any).notes)
             : (lessonData as any).notes
-          : Prisma.JsonNull,
+          : null,
         attachments: lessonData.attachments
           ? JSON.parse(lessonData.attachments)
           : null,
