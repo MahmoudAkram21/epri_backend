@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response, NextFunction } from "express";
 declare global {
     namespace Express {
         interface Request {
@@ -6,6 +6,7 @@ declare global {
                 id: string;
                 email: string;
                 role: string;
+                department_id?: string | null;
             };
         }
     }
@@ -13,5 +14,6 @@ declare global {
 export declare const authenticateToken: (req: Request, res: Response, next: NextFunction) => Promise<void>;
 export declare const requireAdmin: (req: Request, res: Response, next: NextFunction) => void;
 export declare const requireInstructor: (req: Request, res: Response, next: NextFunction) => void;
+export declare const requireDepartmentManager: (req: Request, res: Response, next: NextFunction) => void;
 export declare const requireVerifiedUser: (req: Request, res: Response, next: NextFunction) => void;
 //# sourceMappingURL=auth.d.ts.map

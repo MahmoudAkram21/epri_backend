@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const crypto_1 = __importDefault(require("crypto"));
 const prisma_1 = require("../lib/prisma");
+const i18n_1 = require("../lib/i18n");
 const router = express_1.default.Router();
 function generateSessionId() {
     return crypto_1.default.randomBytes(16).toString('hex');
@@ -13,10 +14,11 @@ function generateSessionId() {
 router.post('/track', async (req, res) => {
     try {
         const { sessionId, pagePath = '/' } = req.body;
+        const t = (0, i18n_1.getT)(req);
         if (!sessionId) {
             return res.status(400).json({
                 success: false,
-                message: 'Session ID is required'
+                message: t('validation.session_id_required')
             });
         }
         const existingVisit = await prisma_1.prisma.siteVisit.findFirst({
@@ -77,14 +79,15 @@ router.post('/track', async (req, res) => {
         }
         return res.json({
             success: true,
-            message: 'Visit tracked successfully'
+            message: t('visitor_stats.visit_tracked')
         });
     }
     catch (error) {
         console.error('Error tracking visit:', error);
+        const t = (0, i18n_1.getT)(req);
         return res.status(500).json({
             success: false,
-            message: 'Failed to track visit',
+            message: t('visitor_stats.failed_to_track'),
             error: process.env.NODE_ENV === 'development' ? error?.message : undefined
         });
     }
@@ -115,9 +118,10 @@ router.get('/stats', async (req, res) => {
     }
     catch (error) {
         console.error('Error getting stats:', error);
+        const t = (0, i18n_1.getT)(req);
         return res.status(500).json({
             success: false,
-            message: 'Failed to get statistics',
+            message: t('visitor_stats.failed_to_get_stats'),
             error: process.env.NODE_ENV === 'development' ? error?.message : undefined
         });
     }
@@ -132,9 +136,10 @@ router.get('/session', (req, res) => {
     }
     catch (error) {
         console.error('Error generating session ID:', error);
+        const t = (0, i18n_1.getT)(req);
         res.status(500).json({
             success: false,
-            message: 'Failed to generate session ID'
+            message: t('visitor_stats.failed_to_generate_session')
         });
     }
 });
@@ -159,16 +164,18 @@ router.post('/reset', async (req, res) => {
                 }
             });
         }
+        const t = (0, i18n_1.getT)(req);
         return res.json({
             success: true,
-            message: 'Counter reset successfully'
+            message: t('visitor_stats.counter_reset')
         });
     }
     catch (error) {
         console.error('Error resetting counter:', error);
+        const t = (0, i18n_1.getT)(req);
         return res.status(500).json({
             success: false,
-            message: 'Failed to reset counter',
+            message: t('visitor_stats.failed_to_reset'),
             error: process.env.NODE_ENV === 'development' ? error?.message : undefined
         });
     }

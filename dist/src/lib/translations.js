@@ -40,6 +40,8 @@ const translations = {
             userVerificationUpdated: 'User verification status updated successfully',
             userCreated: 'User created successfully',
             firstNameLastNameEmailRequired: 'First name, last name, and email are required',
+            userPlanRemoved: 'User plan removed successfully',
+            userTrialStopped: 'User free trial stopped successfully',
         },
         products: {
             notFound: 'Product not found',
@@ -129,6 +131,8 @@ const translations = {
             userVerificationUpdated: 'تم تحديث حالة التحقق من المستخدم بنجاح',
             userCreated: 'تم إنشاء المستخدم بنجاح',
             firstNameLastNameEmailRequired: 'الاسم الأول واسم العائلة والبريد الإلكتروني مطلوبة',
+            userPlanRemoved: 'تم إزالة خطة المستخدم بنجاح',
+            userTrialStopped: 'تم إيقاف التجربة المجانية للمستخدم بنجاح',
         },
         products: {
             notFound: 'المنتج غير موجود',

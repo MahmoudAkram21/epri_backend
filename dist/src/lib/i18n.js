@@ -45,9 +45,13 @@ function getLocale(req) {
             .split(',')
             .map(lang => {
             const [code, q = '1.0'] = lang.trim().split(';');
+            if (!code) {
+                return null;
+            }
             const quality = parseFloat(q.replace('q=', ''));
-            return { code: code.split('-')[0].toLowerCase(), quality };
+            return { code: (code.split('-')[0] ?? code).toLowerCase(), quality };
         })
+            .filter((lang) => lang !== null)
             .sort((a, b) => b.quality - a.quality);
         for (const lang of languages) {
             if (exports.supportedLocales.includes(lang.code)) {
