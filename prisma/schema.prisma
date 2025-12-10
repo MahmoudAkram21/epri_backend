@@ -31,6 +31,7 @@ enum UserRole {
   INSTRUCTOR
   ADMIN
   GUEST
+  DEPARTMENT_MANAGER
 }
 
 enum EventStatus {
@@ -54,29 +55,29 @@ model SystemSetting {
   description String?
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
-  
+
   @@map("system_setting")
 }
 
 // Simple Website Visit Counter
 model SiteVisit {
   id         String   @id @default(uuid())
-  session_id String   // Unique session identifier
-  page_path  String   // Page path visited (e.g., "/", "/about")
+  session_id String // Unique session identifier
+  page_path  String // Page path visited (e.g., "/", "/about")
   visited_at DateTime @default(now())
-  
+
   @@unique([session_id, page_path]) // Prevent duplicate counts per session per page
   @@map("site_visit")
 }
 
 // Website statistics summary
 model SiteStats {
-  id            String   @id @default(uuid())
-  total_visits  Int      @default(0)
-  unique_sessions Int    @default(0)
-  created_at    DateTime @default(now())
-  updated_at    DateTime @updatedAt
-  
+  id              String   @id @default(uuid())
+  total_visits    Int      @default(0)
+  unique_sessions Int      @default(0)
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+
   @@map("site_stats")
 }
 
@@ -90,61 +91,76 @@ model User {
   password_hash String?
   role          UserRole @default(STUDENT)
   is_verified   Boolean  @default(false)
-  created_at    DateTime @default(now())
-  updated_at    DateTime @updatedAt
-  
+
+  // Department assignment for DEPARTMENT_MANAGER role
+  department_id String?
+  department    Department? @relation(fields: [department_id], references: [id], onDelete: SetNull)
+
+  // Plan and Subscription Management
+  plan_type        String? // e.g., "free", "premium", "enterprise", null for no plan
+  plan_start_date  DateTime? // When the plan started
+  plan_end_date    DateTime? // When the plan ends
+  is_trial_active  Boolean   @default(false) // Whether user is on free trial
+  trial_start_date DateTime? // When the trial started
+  trial_end_date   DateTime? // When the trial ends
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
   // Relations
   event_orders  EventOrder[]
   tickets       Ticket[]
+  course_orders CourseOrder[]
   enrollments   CourseEnrollment[]
   reviews       Review[]
-  
+  courses       Course[] // Courses created by this user (if INSTRUCTOR or DEPARTMENT_MANAGER)
+
   @@map("user")
 }
 
 // Event Categories
 model Category {
   id          String   @id @default(uuid())
-  title       String   @unique
-  description String?
-  color       String?  // For UI theming
-  icon        String?  // Icon identifier
+  title       Json // { "en": "English title", "ar": "Arabic title" }
+  description Json? // { "en": "English description", "ar": "Arabic description" }
+  color       String? // For UI theming
+  icon        String? // Icon identifier
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
-  
+
   // Relations
   events EventCategory[]
-  
+
   @@map("category")
 }
 
 // Events/Conferences/Symposiums
 model Event {
-  id              String      @id @default(uuid())
-  title           String
-  description     String?     @db.Text
-  start_date      DateTime
-  end_date        DateTime?
-  price           Decimal     @default(0) @db.Decimal(8, 2)
-  capacity        Int         @default(100)
-  status          EventStatus @default(DRAFT)
-  featured        Boolean     @default(false)
-  registration_open Boolean   @default(true)
-  is_conference   Boolean     @default(false)  // Marks if this event is a conference
-  cover_image     String?     // Cover image URL for the event/conference
-  agenda          Json?                  // Conference agenda/schedule as JSON
-  guidelines      String?     @db.Text  // Guidelines for attendees
-  created_at      DateTime    @default(now())
-  updated_at      DateTime    @updatedAt
-  
+  id                String      @id @default(uuid())
+  title             Json // { "en": "English title", "ar": "Arabic title" }
+  description       Json? // { "en": "English description", "ar": "Arabic description" }
+  guidelines        Json? // { "en": "English guidelines", "ar": "Arabic guidelines" }
+  start_date        DateTime
+  end_date          DateTime?
+  price             Decimal     @default(0) @db.Decimal(8, 2)
+  capacity          Int         @default(100)
+  status            EventStatus @default(DRAFT)
+  featured          Boolean     @default(false)
+  registration_open Boolean     @default(true)
+  is_conference     Boolean     @default(false) // Marks if this event is a conference
+  cover_image       String? // Cover image URL for the event/conference
+  agenda            Json? // Conference agenda/schedule as JSON
+  created_at        DateTime    @default(now())
+  updated_at        DateTime    @updatedAt
+
   // Relations
-  address_id      String?
-  categories      EventCategory[]
-  speakers        Speaker[]
-  address         Address? @relation(fields: [address_id], references: [id])
-  tickets         Ticket[]
-  orders          EventOrder[]
-  
+  address_id String?
+  categories EventCategory[]
+  speakers   Speaker[]
+  address    Address?        @relation(fields: [address_id], references: [id])
+  tickets    Ticket[]
+  orders     EventOrder[]
+
   @@map("event")
 }
 
@@ -154,11 +170,11 @@ model EventCategory {
   event_id    String
   category_id String
   created_at  DateTime @default(now())
-  
+
   // Relations
   event    Event    @relation(fields: [event_id], references: [id], onDelete: Cascade)
   category Category @relation(fields: [category_id], references: [id], onDelete: Cascade)
-  
+
   @@unique([event_id, category_id])
   @@map("event_category")
 }
@@ -166,43 +182,43 @@ model EventCategory {
 // Event Speakers/Presenters
 model Speaker {
   id          String   @id @default(uuid())
-  name        String
-  title       String   // Job title/position
-  bio         String?  @db.Text
-  picture     String?  // Profile image URL
-  topics      Json?    // Array of topics as JSON
-  expertise   String?  // Research areas
-  institution String?  // University/Organization
+  name        Json // { "en": "English name", "ar": "Arabic name" }
+  title       Json // { "en": "English title", "ar": "Arabic title" }
+  bio         Json? // { "en": "English bio", "ar": "Arabic bio" }
+  picture     String? // Profile image URL
+  topics      Json? // Array of topics as JSON
+  expertise   Json? // { "en": "English expertise", "ar": "Arabic expertise" }
+  institution Json? // { "en": "English institution", "ar": "Arabic institution" }
   linkedin    String?
   twitter     String?
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
-  
+
   // Relations
   events Event[]
-  
+
   @@map("speaker")
 }
 
 // Event Address/Location
 model Address {
-  id        String   @id @default(uuid())
-  title     String   // Venue name
-  line_1    String   // Street address
-  line_2    String?  // Additional address info
-  city      String
-  state     String?
-  country   String   @default("Egypt")
+  id          String   @id @default(uuid())
+  title       Json // { "en": "English venue name", "ar": "Arabic venue name" }
+  line_1      Json // { "en": "English street address", "ar": "Arabic street address" }
+  line_2      Json? // { "en": "English additional address", "ar": "Arabic additional address" }
+  city        Json // { "en": "English city", "ar": "Arabic city" }
+  state       Json? // { "en": "English state", "ar": "Arabic state" }
+  country     Json // { "en": "English country", "ar": "Arabic country" }
   postal_code String?
-  map_link  String?  // Google Maps or other map service URL
-  latitude  Float?
-  longitude Float?
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-  
+  map_link    String? // Google Maps or other map service URL
+  latitude    Float?
+  longitude   Float?
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
   // Relations
   events Event[]
-  
+
   @@map("address")
 }
 
@@ -214,186 +230,232 @@ model EventOrder {
   payment_status PaymentStatus @default(PENDING)
   total_amount   Decimal       @db.Decimal(8, 2)
   payment_method String?
-  transaction_id String?       // Payment gateway transaction tract
-  receipt_url    String?       // Receipt file upload URL
-  verified_at    DateTime?     // When payment was verified by admin
+  transaction_id String? // Payment gateway transaction tract
+  receipt_url    String? // Receipt file upload URL
+  verified_at    DateTime? // When payment was verified by admin
   created_at     DateTime      @default(now())
   updated_at     DateTime      @updatedAt
-  
+
   // Relations
   user  User  @relation(fields: [user_id], references: [id])
   event Event @relation(fields: [event_id], references: [id])
-  
+
   @@map("event_order")
 }
 
 // Digital Tickets
 model Ticket {
-  id            String      @id @default(uuid())
-  ticket_number String      @unique
+  id            String       @id @default(uuid())
+  ticket_number String       @unique
   user_id       String
   event_id      String
-  ticket_type   String      @default("GENERAL") // GENERAL, VIP, STUDENT, etc.
-  ticket_price  Decimal     @db.Decimal(8, 2)
+  ticket_type   String       @default("GENERAL") // GENERAL, VIP, STUDENT, etc.
+  ticket_price  Decimal      @db.Decimal(8, 2)
   ticket_status TicketStatus @default(ACTIVE)
-  qr_code       String?     // QR code data for scanning
-  used_at       DateTime?   // When ticket was used/checked-in
-  created_at    DateTime    @default(now())
-  updated_at    DateTime    @updatedAt
-  
+  qr_code       String? // QR code data for scanning
+  used_at       DateTime? // When ticket was used/checked-in
+  created_at    DateTime     @default(now())
+  updated_at    DateTime     @updatedAt
+
   // Relations
   user  User  @relation(fields: [user_id], references: [id])
   event Event @relation(fields: [event_id], references: [id])
-  
+
   @@map("ticket")
 }
 
 // Course Management (Enhanced for EPRI)
 model Course {
-  id              String   @id @default(uuid())
-  title           String
-  subtitle        String?
-  description     String?  @db.Text
-  image           String?  // Course cover image
-  instructor_id   String?  // Reference to User with INSTRUCTOR role
-  instructor_name String?  // Instructor name for display
-  category        String   @default("General")
-  price           Decimal  @default(0) @db.Decimal(8, 2)
-  is_free         Boolean  @default(false)
-  duration_hours  Int      @default(0)
-  duration_weeks  Int      @default(0)
-  level           String   @default("BEGINNER") // BEGINNER, INTERMEDIATE, ADVANCED
-  language        String   @default("English")
-  max_students    Int      @default(50)
-  is_published    Boolean  @default(false)
-  is_featured     Boolean  @default(false)
-  
+  id              String      @id @default(uuid())
+  title           Json // { "en": "English title", "ar": "Arabic title" }
+  subtitle        Json? // { "en": "English subtitle", "ar": "Arabic subtitle" }
+  description     Json? // { "en": "English description", "ar": "Arabic description" }
+  image           String? // Course cover image
+  instructor_id   String? // Reference to User with INSTRUCTOR or DEPARTMENT_MANAGER role
+  instructor_name Json? // { "en": "English instructor name", "ar": "Arabic instructor name" }
+  department_id   String? // Department that owns this course (for DEPARTMENT_MANAGER)
+  department      Department? @relation(fields: [department_id], references: [id], onDelete: SetNull)
+  category        Json // { "en": "English category", "ar": "Arabic category" }
+  price           Decimal     @default(0) @db.Decimal(8, 2)
+  is_free         Boolean     @default(false)
+  duration_hours  Int         @default(0)
+  duration_weeks  Int         @default(0)
+  level           Json // { "en": "English level", "ar": "Arabic level" }
+  language        Json // { "en": "English language", "ar": "Arabic language" }
+  max_students    Int         @default(50)
+  is_published    Boolean     @default(false)
+  is_featured     Boolean     @default(false)
+
   // Delivery Type and Location
-  delivery_type   CourseDeliveryType @default(ONLINE)
-  meeting_location String?  // Physical location for offline/hybrid courses
-  room_number     String?  // Room number for offline courses
-  building        String?  // Building name for offline courses
-  address         String?  @db.Text // Full address for offline courses
-  zoom_link       String?  // Zoom/meeting link for online courses
-  meeting_id      String?  // Meeting ID for online courses
+  delivery_type    CourseDeliveryType @default(ONLINE)
+  meeting_location Json? // { "en": "English location", "ar": "Arabic location" }
+  room_number      String? // Room number for offline courses
+  building         String? // Building name for offline courses
+  address          String?            @db.Text // Full address for offline courses
+  zoom_link        String? // Zoom/meeting link for online courses
+  meeting_id       String? // Meeting ID for online courses
   meeting_passcode String? // Meeting passcode for online courses
-  platform        String?  // Platform used (Zoom, Teams, Google Meet, etc.)
-  
+  platform         String? // Platform used (Zoom, Teams, Google Meet, etc.)
+
   // Schedule
-  start_date      DateTime?
-  end_date        DateTime?
-  schedule_info   String?  @db.Text // Additional schedule information
-  time_zone       String   @default("UTC")
-  
+  start_date    DateTime?
+  end_date      DateTime?
+  schedule_info Json? // { "en": "English schedule info", "ar": "Arabic schedule info" }
+  time_zone     String    @default("UTC")
+
   // Learning Objectives and Requirements
-  objectives      Json?    // Array of learning objectives
-  requirements    Json?    // Array of prerequisites
-  
+  objectives   Json? // Array of learning objectives
+  requirements Json? // Array of prerequisites
+
   // Stats
-  rating_average  Float    @default(0.0)
-  rating_count    Int      @default(0)
-  enrollment_count Int     @default(0)
-  
-  created_at      DateTime @default(now())
-  updated_at      DateTime @updatedAt
-  
+  rating_average   Float @default(0.0)
+  rating_count     Int   @default(0)
+  enrollment_count Int   @default(0)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
   // Relations
+  orderItems  CourseOrderItem[]
   enrollments CourseEnrollment[]
+  instructor  User?              @relation(fields: [instructor_id], references: [id], onDelete: SetNull)
   lessons     Lesson[]
   reviews     Review[]
-  
+
   @@map("course")
 }
 
 // Course Lessons (Enhanced for recorded content)
 model Lesson {
-  id          String   @id @default(uuid())
+  id          String  @id @default(uuid())
   course_id   String
-  title       String
-  description String?  @db.Text
-  content     String?  @db.Text // HTML content or markdown
-  video_url   String?  // URL to recorded video
-  video_type  String   @default("youtube") // youtube, vimeo, direct, etc.
-  video_id    String?  // Video ID for platforms like YouTube/Vimeo
-  duration    Int      @default(0) // Duration in minutes
-  order_index Int      @default(0)
-  is_free     Boolean  @default(false)
-  is_preview  Boolean  @default(false) // Can be watched without enrollment
-  
+  title       Json // { "en": "English title", "ar": "Arabic title" }
+  description Json? // { "en": "English description", "ar": "Arabic description" }
+  content     Json? // { "en": "English content", "ar": "Arabic content" }
+  video_url   String? // URL to recorded video
+  video_type  String  @default("youtube") // youtube, vimeo, direct, etc.
+  video_id    String? // Video ID for platforms like YouTube/Vimeo
+  duration    Int     @default(0) // Duration in minutes
+  order_index Int     @default(0)
+  is_free     Boolean @default(false)
+  is_preview  Boolean @default(false) // Can be watched without enrollment
+
   // Additional resources
-  attachments Json?    // Array of file attachments
-  quiz_data   Json?    // Quiz questions for the lesson
-  notes       String?  @db.Text // Lesson notes or transcript
-  
-  created_at  DateTime @default(now())
-  updated_at  DateTime @updatedAt
-  
+  attachments Json? // Array of file attachments
+  quiz_data   Json? // Quiz questions for the lesson
+  notes       Json? // { "en": "English notes", "ar": "Arabic notes" }
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
   // Relations
   course Course @relation(fields: [course_id], references: [id], onDelete: Cascade)
-  
+
   @@map("lesson")
+}
+
+// Course Orders/Purchases (Multi-course support)
+model CourseOrder {
+  id             String        @id @default(uuid())
+  user_id        String
+  payment_status PaymentStatus @default(PENDING)
+  total_amount   Decimal       @db.Decimal(10, 2)
+  currency       String        @default("USD") // EGP or USD
+  country        String? // User's country for currency determination
+  payment_method String? // cash, online, bank_transfer, cash_on_attendance, etc.
+  transaction_id String? // Payment gateway transaction ID
+  receipt_url    String? // Receipt file upload URL
+  verified_at    DateTime? // When payment was verified by admin
+  notes          String?       @db.Text // Additional notes
+  created_at     DateTime      @default(now())
+  updated_at     DateTime      @updatedAt
+
+  // Relations
+  user  User              @relation(fields: [user_id], references: [id])
+  items CourseOrderItem[] // Multiple courses per order
+
+  @@map("course_order")
+}
+
+// Course Order Items (for multi-course orders)
+model CourseOrderItem {
+  id         String   @id @default(uuid())
+  order_id   String
+  course_id  String
+  price      Decimal  @db.Decimal(10, 2)
+  currency   String   @default("USD") // EGP or USD
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  // Relations
+  order  CourseOrder @relation(fields: [order_id], references: [id], onDelete: Cascade)
+  course Course      @relation(fields: [course_id], references: [id])
+
+  @@map("course_order_item")
 }
 
 // Course Enrollments
 model CourseEnrollment {
-  id         String   @id @default(uuid())
-  user_id    String
-  course_id  String
-  enrolled_at DateTime @default(now())
+  id           String    @id @default(uuid())
+  user_id      String
+  course_id    String
+  enrolled_at  DateTime  @default(now())
   completed_at DateTime?
-  progress   Int      @default(0) // Percentage completed
-  
+  progress     Int       @default(0) // Percentage completed
+
   // Relations
   user   User   @relation(fields: [user_id], references: [id])
   course Course @relation(fields: [course_id], references: [id])
-  
+
   @@unique([user_id, course_id])
   @@map("course_enrollment")
 }
 
 // Reviews and Ratings
 model Review {
-  id        String   @id @default(uuid())
-  user_id   String
-  course_id String?
-  event_id  String?
-  rating    Int      // 1-5 stars
-  comment   String?  @db.Text
+  id         String   @id @default(uuid())
+  user_id    String
+  course_id  String?
+  event_id   String?
+  rating     Int // 1-5 stars
+  comment    String?  @db.Text
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
-  
+
   // Relations
   user   User    @relation(fields: [user_id], references: [id])
   course Course? @relation(fields: [course_id], references: [id])
-  
+
   @@map("review")
 }
 
 model Department {
-  id String @id @default(uuid())
-  name String 
-  description String? @db.Text
-  image String?
-  icon String?
-  manager_id String?
+  id          String             @id @default(uuid())
+  name        Json // { "en": "English name", "ar": "Arabic name" }
+  description Json? // { "en": "English description", "ar": "Arabic description" }
+  image       String?
+  icon        String?
+  gallery     Json? // Array of gallery image URLs
+  manager_id  String?
   // Relation to section
-  section_id String?
-  section    DepartmentSection? @relation(fields: [section_id], references: [id])
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-  
+  section_id  String?
+  section     DepartmentSection? @relation(fields: [section_id], references: [id])
+  created_at  DateTime           @default(now())
+  updated_at  DateTime           @updatedAt
+
   // Relations
   staff        DepartmentStaff[]
   laboratories Laboratory[]
-  
+  users        User[] // Users assigned to this department (DEPARTMENT_MANAGER role)
+  courses      Course[] // Courses created by this department
+
   @@map("department")
 }
-
 
 // High-level sections that group departments (e.g., Exploration, Production, etc.)
 model DepartmentSection {
   id          String   @id @default(uuid())
-  name        String   @unique
+  name        Json // { "en": "English name", "ar": "Arabic name" }
   slug        String   @unique
   order_index Int      @default(0)
   created_at  DateTime @default(now())
@@ -406,244 +468,382 @@ model DepartmentSection {
   @@map("department_section")
 }
 
-
 model DepartmentStaff {
-  id String @id @default(uuid())
+  id            String @id @default(uuid())
   department_id String
-  staff_id String
+  staff_id      String
 
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
-  
+
   // Relations
   department Department @relation(fields: [department_id], references: [id], onDelete: Cascade)
   staff      Staff      @relation(fields: [staff_id], references: [id], onDelete: Cascade)
-  
+
   @@unique([department_id, staff_id])
   @@map("department_staff")
 }
 
 model Staff {
-  id String @id @default(uuid())
-  name String
-  title String // Academic Position
-  academic_position String? // Prof., Dr., Eng., etc.
-  current_admin_position String? // Current Administrative Position
-  ex_admin_position String? // Ex-Administrative Position
-  scientific_name String? // Scientific Name (different from display name)
-  picture String? // Main profile picture
-  gallery Json? // Array of additional images
-  bio String? @db.Text
-  research_interests String? @db.Text
-  news String? @db.Text // Staff news/announcements
-  
+  id                     String  @id @default(uuid())
+  name                   Json // { "en": "English name", "ar": "Arabic name" }
+  title                  Json // { "en": "English title", "ar": "Arabic title" }
+  academic_position      Json? // { "en": "English position", "ar": "Arabic position" }
+  current_admin_position Json? // { "en": "English current admin position", "ar": "Arabic current admin position" }
+  ex_admin_position      Json? // { "en": "English ex admin position", "ar": "Arabic ex admin position" }
+  scientific_name        Json? // { "en": "English scientific name", "ar": "Arabic scientific name" }
+  picture                String? // Main profile picture
+  gallery                Json? // Array of additional images
+  bio                    Json? // { "en": "English bio", "ar": "Arabic bio" }
+  research_interests     Json? // { "en": "English research interests", "ar": "Arabic research interests" }
+  news                   Json? // { "en": "English news", "ar": "Arabic news" }
+
   // Contact Information
-  email String?
+  email             String?
   alternative_email String?
-  phone String?
-  mobile String?
-  website String?
-  
+  phone             String?
+  mobile            String?
+  website           String?
+
   // Academic Links
   google_scholar String?
-  research_gate String?
-  academia_edu String?
-  linkedin String?
-  facebook String?
-  twitter String?
-  google_plus String?
-  youtube String?
-  wordpress String?
-  instagram String?
-  mendeley String?
-  zotero String?
-  evernote String?
-  orcid String?
-  scopus String?
-  
+  research_gate  String?
+  academia_edu   String?
+  linkedin       String?
+  facebook       String?
+  twitter        String?
+  google_plus    String?
+  youtube        String?
+  wordpress      String?
+  instagram      String?
+  mendeley       String?
+  zotero         String?
+  evernote       String?
+  orcid          String?
+  scopus         String?
+
   // Publication Stats
-  publications_count Int @default(0)
-  papers_count Int @default(0)
-  abstracts_count Int @default(0)
-  courses_files_count Int @default(0)
-  inlinks_count Int @default(0)
+  publications_count   Int @default(0)
+  papers_count         Int @default(0)
+  abstracts_count      Int @default(0)
+  courses_files_count  Int @default(0)
+  inlinks_count        Int @default(0)
   external_links_count Int @default(0)
-  
+
   // Organizational Info
-  faculty String?
-  department String?
-  office_location String?
-  office_hours String?
-  
+  faculty         Json? // { "en": "English faculty", "ar": "Arabic faculty" }
+  department      Json? // { "en": "English department", "ar": "Arabic department" }
+  office_location Json? // { "en": "English office location", "ar": "Arabic office location" }
+  office_hours    Json? // { "en": "English office hours", "ar": "Arabic office hours" }
+
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
-  
+
   // Relations
-  departments DepartmentStaff[]
-  
+  departments    DepartmentStaff[]
+  serviceCenters ServiceCenterStaff[]
+
   @@map("staff")
 }
 
 // Laboratory Models
 model Laboratory {
-  id String @id @default(uuid())
-  name String
-  description String? @db.Text
-  image String? // Main laboratory image
-  
+  id          String  @id @default(uuid())
+  name        Json // { "en": "English name", "ar": "Arabic name" }
+  description Json? // { "en": "English description", "ar": "Arabic description" }
+  image       String? // Main laboratory image
+
   // Head of Laboratory Information
-  head_name String? // e.g., "Prof. Dr. Mostafa Gouda Mohamed"
-  head_title String? // e.g., "Head of The Laboratory"
-  head_academic_title String? // e.g., "Prof. Dr."
-  head_picture String? // Head's profile picture
-  head_cv_url String? // Link to full CV
-  head_email String? // e.g., "gouda250@yahoo.com"
-  head_bio String? @db.Text // Biography of the head
-  
+  head_name           Json? // { "en": "English head name", "ar": "Arabic head name" }
+  head_title          Json? // { "en": "English head title", "ar": "Arabic head title" }
+  head_academic_title Json? // { "en": "English academic title", "ar": "Arabic academic title" }
+  head_picture        String? // Head's profile picture
+  head_cv_url         String? // Link to full CV
+  head_email          String? // e.g., "gouda250@yahoo.com"
+  head_bio            Json? // { "en": "English head bio", "ar": "Arabic head bio" }
+
   // Contact Information
-  address String? // e.g., "1 Ahmed El-Zomor Street, El Zohour Region, Nasr city, Cairo"
-  phone String? // e.g., "+(202)22747847"
+  address           Json? // { "en": "English address", "ar": "Arabic address" }
+  phone             String? // e.g., "+(202)22747847"
   alternative_phone String? // e.g., "+(202)22747433"
-  fax String?
-  email String? // Laboratory general email
-  website String?
-  
+  fax               String?
+  email             String? // Laboratory general email
+  website           String?
+
   // Laboratory Details
   established_year Int?
-  facilities String? @db.Text // Description of facilities
-  equipment_list String? @db.Text // List of major equipment
-  research_areas String? @db.Text // Research focus areas
-  services_offered String? @db.Text // Services the lab provides
-  staff_count Int @default(0)
-  students_count Int @default(0)
-  
+  facilities       Json? // { "en": "English facilities", "ar": "Arabic facilities" }
+  equipment_list   Json? // { "en": "English equipment list", "ar": "Arabic equipment list" }
+  research_areas   Json? // { "en": "English research areas", "ar": "Arabic research areas" }
+  services_offered Json? // { "en": "English services", "ar": "Arabic services" }
+  staff_count      Int   @default(0)
+  students_count   Int   @default(0)
+
   // Organizational Info
   department_id String? // Link to department if applicable
-  section_id String? // Link to section if applicable
-  building String? // Building location
-  floor String? // Floor number
-  room_numbers String? // Room numbers
-  
+  section_id    String? // Link to section if applicable
+  building      String? // Building location
+  floor         String? // Floor number
+  room_numbers  String? // Room numbers
+
   // Status and Visibility
-  is_active Boolean @default(true)
-  is_featured Boolean @default(false)
-  display_order Int @default(0)
-  
+  is_active     Boolean @default(true)
+  is_featured   Boolean @default(false)
+  display_order Int     @default(0)
+
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
-  
+
   // Relations
-  department Department? @relation(fields: [department_id], references: [id])
-  section DepartmentSection? @relation(fields: [section_id], references: [id])
-  
+  department Department?        @relation(fields: [department_id], references: [id])
+  section    DepartmentSection? @relation(fields: [section_id], references: [id])
+
   @@map("laboratory")
 }
 
 // Services Models
 model Service {
-  id String @id @default(uuid())
-  title String
-  subtitle String?
-  description String? @db.Text
-  image String?
-  category String
-  icon String?
-  features Json? // Array of features as JSON
-  duration String?
-  price Decimal? @default(0) @db.Decimal(8, 2)
-  is_free Boolean @default(false)
-  is_featured Boolean @default(false)
-  is_published Boolean @default(true)
+  id             String   @id @default(uuid())
+  title          Json // { "en": "English title", "ar": "Arabic title" }
+  subtitle       Json? // { "en": "English subtitle", "ar": "Arabic subtitle" }
+  description    Json? // { "en": "English description", "ar": "Arabic description" }
+  image          String?
+  category       String
+  icon           String?
+  features       Json? // Array of features as JSON
+  duration       String?
+  price          Decimal? @default(0) @db.Decimal(8, 2)
+  is_free        Boolean  @default(false)
+  is_featured    Boolean  @default(false)
+  is_published   Boolean  @default(true)
   center_head_id String?
-  group_name String? // For organizing services into groups/tabs
-  group_order Int? @default(0) // Order within group
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-  
+  group_name     String? // For organizing services into groups/tabs
+  group_order    Int?     @default(0) // Order within group
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+
   // Relations
   center_head ServiceCenterHead? @relation(fields: [center_head_id], references: [id])
-  equipment ServiceEquipment[]
-  tabs ServiceTab[]
-  
+  equipment   ServiceEquipment[]
+  tabs        ServiceTab[]
+
   @@map("service")
 }
 
 model ServiceTab {
-  id String @id @default(uuid())
-  service_id String
-  title String
-  content String @db.Text
-  order_index Int @default(0)
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-  
+  id          String   @id @default(uuid())
+  service_id  String
+  title       Json // { "en": "English title", "ar": "Arabic title" }
+  content     Json // { "en": "English content", "ar": "Arabic content" }
+  order_index Int      @default(0)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
   // Relations
   service Service @relation(fields: [service_id], references: [id], onDelete: Cascade)
-  
+
   @@map("service_tab")
 }
 
 model ServiceCenterHead {
-  id String @id @default(uuid())
-  name String
-  title String
-  picture String?
-  bio String? @db.Text
-  email String?
-  phone String?
-  expertise Json? // Array of expertise areas as JSON
+  id         String   @id @default(uuid())
+  name       Json // { "en": "English name", "ar": "Arabic name" }
+  title      Json // { "en": "English title", "ar": "Arabic title" }
+  picture    String?
+  bio        Json? // { "en": "English bio", "ar": "Arabic bio" }
+  email      String?
+  phone      String?
+  expertise  Json? // Array of expertise areas as JSON (can contain translations)
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
-  
+
   // Relations
   services Service[]
-  
+
   @@map("service_center_head")
 }
 
 model ServiceEquipment {
-  id String @id @default(uuid())
-  serviceId String? @map("service_id")
-  serviceCenterId String? @map("service_center_id")
-  name String
-  description String? @db.Text
-  image String?
-  specifications Json? // Array of specifications as JSON
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-  
+  id              String   @id @default(uuid())
+  serviceId       String?  @map("service_id")
+  serviceCenterId String?  @map("service_center_id")
+  name            Json // { "en": "English name", "ar": "Arabic name" }
+  description     Json? // { "en": "English description", "ar": "Arabic description" }
+  image           String?
+  specifications  Json? // Array of specifications as JSON
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+
   // Relations
-  service Service? @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  service       Service?       @relation(fields: [serviceId], references: [id], onDelete: Cascade)
   serviceCenter ServiceCenter? @relation(fields: [serviceCenterId], references: [id], onDelete: Cascade)
-  
+
   @@map("service_equipment")
 }
 
 model ServiceCenter {
-  id String @id @default(uuid())
-  name String
-  slug String @unique
-  type String @default("center") // "center" or "unit"
-  headline String?
-  description String? @db.Text
-  image String?
-  banner_image String?
-  location String?
-  contact_phone String?
-  contact_email String?
-  products Json? // Array of products (hidden when empty on frontend)
-  lab_methodology String? @db.Text
-  work_volume Json? // Chart data for work volume e.g. { totalIncomeRate, dataPoints: [] }
-  company_activity Json? // Chart data for company activity
-  future_prospective String? @db.Text
-  services Json? // Array of services/offers summary
-  metrics Json? // Additional KPIs or stats
-  is_featured Boolean @default(false)
-  is_published Boolean @default(true)
-  order_index Int @default(0)
-  equipments ServiceEquipment[]
+  id                 String               @id @default(uuid())
+  name               Json // { "en": "English name", "ar": "Arabic name" }
+  slug               String               @unique
+  type               String               @default("center") // "center" or "unit"
+  headline           Json? // { "en": "English headline", "ar": "Arabic headline" }
+  description        Json? // { "en": "English description", "ar": "Arabic description" }
+  image              String?
+  banner_image       String?
+  gallery            Json? // Array of gallery image URLs
+  location           Json? // { "en": "English location", "ar": "Arabic location" }
+  contact_phone      String?
+  contact_email      String?
+  products           Json? // Array of products (hidden when empty on frontend) - DEPRECATED: Use Product model instead
+  lab_methodology    Json? // { "en": "English methodology", "ar": "Arabic methodology" }
+  work_volume        Json? // Chart data for work volume e.g. { totalIncomeRate, dataPoints: [] }
+  company_activity   Json? // Chart data for company activity
+  future_prospective Json? // { "en": "English prospective", "ar": "Arabic prospective" }
+  services           Json? // Array of services/offers summary
+  metrics            Json? // Additional KPIs or stats
+  is_featured        Boolean              @default(false)
+  is_published       Boolean              @default(true)
+  order_index        Int                  @default(0)
+  equipments         ServiceEquipment[]
+  products_list      Product[] // New relation to Product model
+  staff              ServiceCenterStaff[]
+  created_at         DateTime             @default(now())
+  updated_at         DateTime             @updatedAt
+
+  @@map("service_center")
+}
+
+model ServiceCenterStaff {
+  id                String @id @default(uuid())
+  service_center_id String
+  staff_id          String
+
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  @@map("service_center")
+  // Relations
+  serviceCenter ServiceCenter @relation(fields: [service_center_id], references: [id], onDelete: Cascade)
+  staff         Staff         @relation(fields: [staff_id], references: [id], onDelete: Cascade)
+
+  @@unique([service_center_id, staff_id])
+  @@map("service_center_staff")
+}
+
+// Product Model
+model Product {
+  id                String   @id @default(uuid())
+  name              Json // { "en": "English name", "ar": "Arabic name" }
+  slug              String   @unique
+  description       Json? // { "en": "English description", "ar": "Arabic description" }
+  short_description Json? // { "en": "English short description", "ar": "Arabic short description" }
+  image             String? // Main product image
+  images            Json? // Array of additional images
+  price             Decimal? @default(0) @db.Decimal(10, 2)
+  original_price    Decimal? @db.Decimal(10, 2) // For showing discounts
+  category          String? // Product category
+  tags              Json? // Array of tags
+  specifications    Json? // Product specifications as JSON
+  features          Json? // Array of features
+  sizes             Json? // Available sizes if applicable
+  stock_quantity    Int? // Stock quantity (null for unlimited)
+  sku               String? // Stock Keeping Unit
+  rating_average    Float    @default(0.0)
+  rating_count      Int      @default(0)
+  review_count      Int      @default(0)
+  is_featured       Boolean  @default(false)
+  is_published      Boolean  @default(true)
+  is_available      Boolean  @default(true)
+  order_index       Int      @default(0)
+
+  // Relations
+  service_center_id String?
+  service_center    ServiceCenter? @relation(fields: [service_center_id], references: [id], onDelete: SetNull)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  @@map("product")
+}
+
+// ISO Certificates
+model ISOCertificate {
+  id               String    @id @default(uuid())
+  title            Json // { "en": "ISO 9001:2015", "ar": "..." }
+  description      Json? // { "en": "English description", "ar": "Arabic description" }
+  image_url        String // URL to certificate image
+  certificate_type String // e.g., "ISO 9001:2015", "ISO 45001:2018"
+  issued_date      DateTime?
+  expiry_date      DateTime?
+  issuer           String? // Certification body
+  is_active        Boolean   @default(true)
+  order_index      Int       @default(0)
+  created_at       DateTime  @default(now())
+  updated_at       DateTime  @updatedAt
+
+  @@map("iso_certificate")
+}
+
+// Hero Slider Model - Repeatable hero slides
+model HeroSlider {
+  id          String   @id @default(uuid())
+  media_type  String   @default("image") // "image" or "video"
+  image       String? // Image URL
+  video       String? // Video URL
+  title       Json // { "en": "English title", "ar": "Arabic title" }
+  subtitle    Json // { "en": "English subtitle", "ar": "Arabic subtitle" }
+  description Json // { "en": "English description", "ar": "Arabic description" }
+  cta         Json // { "en": "English CTA text", "ar": "Arabic CTA text" }
+  cta_link    String // Link for CTA button
+  badge       Json // { "en": "English badge text", "ar": "Arabic badge text" }
+  icon        String? // Icon identifier (e.g., "Microscope", "Calendar", etc.)
+  stats       Json? // Array of stats: [{ "value": "500+", "label": { "en": "...", "ar": "..." } }]
+  is_active   Boolean  @default(true)
+  order_index Int      @default(0)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  @@map("hero_slider")
+}
+
+// Home Page Content Management
+model HomePageContent {
+  id          String   @id @default(uuid())
+  section_key String   @unique // e.g., "why_choose", "achievements", "cta", etc.
+  title       Json? // { "en": "English title", "ar": "Arabic title" }
+  subtitle    Json? // { "en": "English subtitle", "ar": "Arabic subtitle" }
+  description Json? // { "en": "English description", "ar": "Arabic description" }
+  content     Json? // Flexible JSON for section-specific content (arrays, objects, etc.)
+  images      Json? // Array of image URLs
+  button_text Json? // { "en": "English button text", "ar": "Arabic button text" }
+  button_link String?
+  is_active   Boolean  @default(true)
+  order_index Int      @default(0)
+  metadata    Json? // Additional metadata (colors, settings, etc.)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  @@map("home_page_content")
+}
+
+// Generic Page Content Management - for all pages
+model PageContent {
+  id          String   @id @default(uuid())
+  page_key    String // e.g., "about", "departments", "training-center", etc.
+  section_key String // e.g., "overview", "hero", "intro", etc. (can be empty for single-section pages)
+  title       Json? // { "en": "English title", "ar": "Arabic title" }
+  subtitle    Json? // { "en": "English subtitle", "ar": "Arabic subtitle" }
+  description Json? // { "en": "English description", "ar": "Arabic description" }
+  content     Json? // Flexible JSON for section-specific content (arrays, objects, etc.)
+  images      Json? // Array of image URLs
+  button_text Json? // { "en": "English button text", "ar": "Arabic button text" }
+  button_link String?
+  is_active   Boolean  @default(true)
+  order_index Int      @default(0)
+  metadata    Json? // Additional metadata (colors, settings, etc.)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  @@unique([page_key, section_key])
+  @@index([page_key])
+  @@map("page_content")
 }

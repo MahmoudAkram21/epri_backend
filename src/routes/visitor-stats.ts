@@ -1,6 +1,7 @@
 import express from 'express';
 import crypto from 'crypto';
 import { prisma } from '../lib/prisma';
+import { getT } from '../lib/i18n';
 
 const router = express.Router();
 
@@ -14,75 +15,93 @@ router.post('/track', async (req, res) => {
   try {
     const { sessionId, pagePath = '/' } = req.body;
     
+    const t = getT(req);
     if (!sessionId) {
       return res.status(400).json({ 
         success: false, 
-        message: 'Session ID is required' 
+        message: t('validation.session_id_required') 
       });
     }
 
-    // Check if this session already visited this page using raw SQL
-    const existingVisit = await prisma.$queryRaw`
-      SELECT id FROM site_visit 
-      WHERE session_id = ${sessionId} AND page_path = ${pagePath}
-      LIMIT 1
-    `;
+    // Check if this session already visited this page
+    // Use findFirst since we have a compound unique constraint
+    const existingVisit = await prisma.siteVisit.findFirst({
+      where: {
+        session_id: sessionId,
+        page_path: pagePath
+      }
+    });
 
-    if (!Array.isArray(existingVisit) || existingVisit.length === 0) {
-      // New visit - create visit record using raw SQL
-      await prisma.$executeRaw`
-        INSERT INTO site_visit (id, session_id, page_path, visited_at)
-        VALUES (UUID(), ${sessionId}, ${pagePath}, NOW())
-      `;
+    if (!existingVisit) {
+      // New visit - create visit record
+      await prisma.siteVisit.create({
+        data: {
+          session_id: sessionId,
+          page_path: pagePath
+        }
+      });
 
-      // Get or create site stats using raw SQL
-      const stats = await prisma.$queryRaw`
-        SELECT * FROM site_stats LIMIT 1
-      `;
+      // Get or create site stats
+      let stats = await prisma.siteStats.findFirst();
       
-      if (!Array.isArray(stats) || stats.length === 0) {
+      if (!stats) {
         // Create initial stats record
-        await prisma.$executeRaw`
-          INSERT INTO site_stats (id, total_visits, unique_sessions, created_at, updated_at)
-          VALUES (UUID(), 1, 1, NOW(), NOW())
-        `;
+        stats = await prisma.siteStats.create({
+          data: {
+            total_visits: 1,
+            unique_sessions: 1
+          }
+        });
       } else {
-        // Check if this is a new session
-        const sessionExists = await prisma.$queryRaw`
-          SELECT id FROM site_visit 
-          WHERE session_id = ${sessionId} 
-          AND NOT (session_id = ${sessionId} AND page_path = ${pagePath})
-          LIMIT 1
-        `;
+        // Check if this is a new session (has this session visited any other page?)
+        const otherVisits = await prisma.siteVisit.findFirst({
+          where: {
+            session_id: sessionId,
+            page_path: {
+              not: pagePath
+            }
+          }
+        });
 
-        if (Array.isArray(sessionExists) && sessionExists.length > 0) {
+        if (otherVisits) {
           // Existing session, only increment total visits
-          await prisma.$executeRaw`
-            UPDATE site_stats 
-            SET total_visits = total_visits + 1, updated_at = NOW()
-            WHERE id = ${(stats as any)[0].id}
-          `;
+          await prisma.siteStats.update({
+            where: { id: stats.id },
+            data: {
+              total_visits: {
+                increment: 1
+              }
+            }
+          });
         } else {
           // New session, increment both
-          await prisma.$executeRaw`
-            UPDATE site_stats 
-            SET total_visits = total_visits + 1, unique_sessions = unique_sessions + 1, updated_at = NOW()
-            WHERE id = ${(stats as any)[0].id}
-          `;
+          await prisma.siteStats.update({
+            where: { id: stats.id },
+            data: {
+              total_visits: {
+                increment: 1
+              },
+              unique_sessions: {
+                increment: 1
+              }
+            }
+          });
         }
       }
     }
 
     return res.json({ 
       success: true, 
-      message: 'Visit tracked successfully' 
+      message: t('visitor_stats.visit_tracked') 
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error tracking visit:', error);
+    const t = getT(req);
     return res.status(500).json({ 
       success: false, 
-      message: 'Failed to track visit' 
+      message: t('visitor_stats.failed_to_track'),
+      error: process.env.NODE_ENV === 'development' ? error?.message : undefined
     });
   }
 });
@@ -90,11 +109,9 @@ router.post('/track', async (req, res) => {
 // Get website statistics
 router.get('/stats', async (req, res) => {
   try {
-    const stats = await prisma.$queryRaw`
-      SELECT * FROM site_stats LIMIT 1
-    `;
+    const stats = await prisma.siteStats.findFirst();
 
-    if (!Array.isArray(stats) || stats.length === 0) {
+    if (!stats) {
       // Return default stats if none exist
       return res.json({
         success: true,
@@ -107,22 +124,23 @@ router.get('/stats', async (req, res) => {
       });
     }
 
-    const statsData = (stats as any)[0];
     return res.json({
       success: true,
       data: {
-        totalVisits: statsData.total_visits || 0,
-        uniqueSessions: statsData.unique_sessions || 0,
-        since: statsData.created_at,
-        lastUpdated: statsData.updated_at
+        totalVisits: stats.total_visits || 0,
+        uniqueSessions: stats.unique_sessions || 0,
+        since: stats.created_at,
+        lastUpdated: stats.updated_at
       }
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error getting stats:', error);
+    const t = getT(req);
     return res.status(500).json({
       success: false,
-      message: 'Failed to get statistics'
+      message: t('visitor_stats.failed_to_get_stats'),
+      error: process.env.NODE_ENV === 'development' ? error?.message : undefined
     });
   }
 });
@@ -137,9 +155,10 @@ router.get('/session', (req, res) => {
     });
   } catch (error) {
     console.error('Error generating session ID:', error);
+    const t = getT(req);
     res.status(500).json({
       success: false,
-      message: 'Failed to generate session ID'
+      message: t('visitor_stats.failed_to_generate_session')
     });
   }
 });
@@ -147,35 +166,42 @@ router.get('/session', (req, res) => {
 // Reset counter (admin only - you might want to add authentication)
 router.post('/reset', async (req, res) => {
   try {
-    // Clear all site visits using raw SQL
-    await prisma.$executeRaw`DELETE FROM site_visit`;
+    // Clear all site visits
+    await prisma.siteVisit.deleteMany({});
 
-    // Reset or create stats using raw SQL
-    const stats = await prisma.$queryRaw`SELECT * FROM site_stats LIMIT 1`;
+    // Reset or create stats
+    const stats = await prisma.siteStats.findFirst();
     
-    if (Array.isArray(stats) && stats.length > 0) {
-      await prisma.$executeRaw`
-        UPDATE site_stats 
-        SET total_visits = 0, unique_sessions = 0, updated_at = NOW()
-        WHERE id = ${(stats as any)[0].id}
-      `;
+    if (stats) {
+      await prisma.siteStats.update({
+        where: { id: stats.id },
+        data: {
+          total_visits: 0,
+          unique_sessions: 0
+        }
+      });
     } else {
-      await prisma.$executeRaw`
-        INSERT INTO site_stats (id, total_visits, unique_sessions, created_at, updated_at)
-        VALUES (UUID(), 0, 0, NOW(), NOW())
-      `;
+      await prisma.siteStats.create({
+        data: {
+          total_visits: 0,
+          unique_sessions: 0
+        }
+      });
     }
 
+    const t = getT(req);
     return res.json({
       success: true,
-      message: 'Counter reset successfully'
+      message: t('visitor_stats.counter_reset')
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error resetting counter:', error);
+    const t = getT(req);
     return res.status(500).json({
       success: false,
-      message: 'Failed to reset counter'
+      message: t('visitor_stats.failed_to_reset'),
+      error: process.env.NODE_ENV === 'development' ? error?.message : undefined
     });
   }
 });

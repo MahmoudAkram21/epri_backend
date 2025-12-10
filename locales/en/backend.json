@@ -1,0 +1,203 @@
+{
+  "common": {
+    "success": "Success",
+    "error": "Error",
+    "not_found": "Not found",
+    "unauthorized": "Unauthorized",
+    "forbidden": "Forbidden",
+    "bad_request": "Bad request",
+    "server_error": "Internal server error",
+    "created": "Created successfully",
+    "updated": "Updated successfully",
+    "deleted": "Deleted successfully",
+    "saved": "Saved successfully",
+    "loading": "Loading...",
+    "no_data": "No data available",
+    "something_went_wrong": "Something went wrong!"
+  },
+  "auth": {
+    "login_success": "Login successful",
+    "login_failed": "Login failed",
+    "invalid_credentials": "Invalid credentials",
+    "token_expired": "Token expired",
+    "token_invalid": "Invalid token",
+    "registration_success": "Registration successful",
+    "registration_failed": "Registration failed",
+    "email_exists": "Email already exists",
+    "password_too_short": "Password too short",
+    "password_min_length": "Password must be at least 8 characters long",
+    "email_password_required": "Email and password are required",
+    "account_pending": "Account pending verification. Please wait for administrator approval.",
+    "account_not_verified": "Account not verified",
+    "access_token_required": "Access token required",
+    "authentication_required": "Authentication required",
+    "user_not_found": "User not found",
+    "token_valid": "Token is valid",
+    "invalid_unverified_token": "Invalid or unverified token",
+    "invalid_or_expired_token": "Invalid or expired token",
+    "admin_access_required": "Admin access required",
+    "instructor_access_required": "Instructor access required",
+    "verified_user_access_required": "Verified user access required",
+    "user_role_updated": "User role updated successfully",
+    "user_verification_updated": "User verification status updated successfully",
+    "user_created": "User created successfully",
+    "user_updated": "User updated successfully",
+    "user_deleted": "User deleted successfully",
+    "user_plan_removed": "User plan removed successfully",
+    "user_trial_stopped": "User free trial stopped successfully",
+    "first_name_last_name_email_required": "First name, last name, and email are required",
+    "email_already_in_use": "Email already in use",
+    "user_with_email_exists": "User with this email already exists",
+    "department_manager_assignment_required": "Department manager must be assigned to a department"
+  },
+  "products": {
+    "not_found": "Product not found",
+    "created": "Product created successfully",
+    "updated": "Product updated successfully",
+    "deleted": "Product deleted successfully",
+    "list_retrieved": "Products retrieved successfully",
+    "name_required": "Product name is required",
+    "name_already_exists": "A product with this name already exists"
+  },
+  "services": {
+    "not_found": "Service not found",
+    "created": "Service created successfully",
+    "updated": "Service updated successfully",
+    "deleted": "Service deleted successfully",
+    "list_retrieved": "Services retrieved successfully",
+    "title_description_required": "Title and description are required",
+    "failed_to_fetch": "Failed to fetch service",
+    "failed_to_create": "Failed to create service",
+    "failed_to_update": "Failed to update service",
+    "failed_to_delete": "Failed to delete service"
+  },
+  "departments": {
+    "not_found": "Department not found",
+    "created": "Department created successfully",
+    "updated": "Department updated successfully",
+    "deleted": "Department deleted successfully",
+    "list_retrieved": "Departments retrieved successfully",
+    "failed_to_fetch": "Failed to fetch department",
+    "failed_to_fetch_sections": "Failed to fetch department sections",
+    "failed_to_fetch_list": "Failed to fetch departments"
+  },
+  "events": {
+    "not_found": "Event not found",
+    "created": "Event created successfully",
+    "updated": "Event updated successfully",
+    "deleted": "Event deleted successfully",
+    "list_retrieved": "Events retrieved successfully",
+    "endpoint_ready": "Events endpoint - ready for implementation"
+  },
+  "news": {
+    "not_found": "News not found",
+    "created": "News created successfully",
+    "updated": "News updated successfully",
+    "deleted": "News deleted successfully",
+    "list_retrieved": "News retrieved successfully"
+  },
+  "users": {
+    "not_found": "User not found",
+    "created": "User created successfully",
+    "updated": "User updated successfully",
+    "deleted": "User deleted successfully",
+    "list_retrieved": "Users retrieved successfully"
+  },
+  "staff": {
+    "not_found": "Staff member not found",
+    "failed_to_fetch": "Failed to fetch staff",
+    "created": "Staff member created successfully",
+    "updated": "Staff member updated successfully",
+    "deleted": "Staff member deleted successfully",
+    "id_required": "Staff ID is required",
+    "name_title_required": "Name and title are required"
+  },
+  "laboratories": {
+    "not_found": "Laboratory not found",
+    "created": "Laboratory created successfully",
+    "updated": "Laboratory updated successfully",
+    "deleted": "Laboratory deleted successfully",
+    "name_required": "Laboratory name is required"
+  },
+  "department_sections": {
+    "not_found": "Department section not found",
+    "created": "Department section created successfully",
+    "updated": "Department section updated successfully",
+    "deleted": "Department section deleted successfully",
+    "id_required": "Section ID is required",
+    "name_slug_required": "Name and slug are required",
+    "slug_exists": "Section with this slug already exists"
+  },
+  "department_staff": {
+    "assignments_updated": "Department staff assignments updated successfully",
+    "removed": "Staff member removed from department successfully",
+    "id_required": "Department ID and Staff ID are required",
+    "assignment_not_found": "Staff assignment not found",
+    "department_id_required": "Department ID is required",
+    "staff_ids_required": "Staff IDs array is required",
+    "no_access": "You do not have access to this department"
+  },
+  "courses": {
+    "not_found": "Course not found",
+    "created": "Course created successfully",
+    "updated": "Course updated successfully",
+    "deleted": "Course deleted successfully",
+    "list_retrieved": "Courses retrieved successfully",
+    "lesson_not_found": "Lesson not found",
+    "id_required": "Course ID is required",
+    "fields_required": "Title, category, level, and delivery type are required",
+    "no_access": "You do not have access to this course"
+  },
+  "course_orders": {
+    "not_found": "Course order not found",
+    "updated": "Course order updated successfully",
+    "id_required": "Course order ID is required"
+  },
+  "home_page": {
+    "content_saved": "Home page content saved successfully",
+    "failed_to_save": "Failed to save home page content",
+    "slider_created": "Hero slider created successfully",
+    "slider_updated": "Hero slider updated successfully",
+    "slider_deleted": "Hero slider deleted successfully",
+    "slider_error": "Failed to save hero slider"
+  },
+  "validation": {
+    "session_id_required": "Session ID is required",
+    "id_required": "ID is required",
+    "department_id_required": "Department ID is required",
+    "page_key_required": "Page key is required"
+  },
+  "page_content": {
+    "saved": "Page content saved successfully",
+    "updated": "Page content updated successfully",
+    "deleted": "Page content deleted successfully",
+    "not_found": "Page content not found"
+  },
+  "api": {
+    "health_ok": "EPRI Backend API is running",
+    "internal_error": "Internal server error"
+  },
+  "visitor_stats": {
+    "visit_tracked": "Visit tracked successfully",
+    "failed_to_track": "Failed to track visit",
+    "failed_to_get_stats": "Failed to get statistics",
+    "counter_reset": "Counter reset successfully",
+    "failed_to_reset": "Failed to reset counter",
+    "failed_to_generate_session": "Failed to generate session ID"
+  },
+  "service_center": {
+    "not_found": "Service center not found"
+  },
+  "status": {
+    "pending": "Pending",
+    "paid": "Paid",
+    "cancelled": "Cancelled",
+    "refunded": "Refunded",
+    "active": "Active",
+    "used": "Used",
+    "expired": "Expired",
+    "draft": "Draft",
+    "published": "Published",
+    "completed": "Completed"
+  }
+}

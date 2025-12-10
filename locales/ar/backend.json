@@ -1,0 +1,203 @@
+{
+  "common": {
+    "success": "نجح",
+    "error": "خطأ",
+    "not_found": "غير موجود",
+    "unauthorized": "غير مصرح",
+    "forbidden": "ممنوع",
+    "bad_request": "طلب غير صحيح",
+    "server_error": "خطأ في الخادم",
+    "created": "تم الإنشاء بنجاح",
+    "updated": "تم التحديث بنجاح",
+    "deleted": "تم الحذف بنجاح",
+    "saved": "تم الحفظ بنجاح",
+    "loading": "جاري التحميل...",
+    "no_data": "لا توجد بيانات",
+    "something_went_wrong": "حدث خطأ ما!"
+  },
+  "auth": {
+    "login_success": "تم تسجيل الدخول بنجاح",
+    "login_failed": "فشل تسجيل الدخول",
+    "invalid_credentials": "بيانات غير صحيحة",
+    "token_expired": "انتهت صلاحية الرمز",
+    "token_invalid": "رمز غير صحيح",
+    "registration_success": "تم التسجيل بنجاح",
+    "registration_failed": "فشل التسجيل",
+    "email_exists": "البريد الإلكتروني موجود بالفعل",
+    "password_too_short": "كلمة المرور قصيرة جداً",
+    "password_min_length": "يجب أن تكون كلمة المرور 8 أحرف على الأقل",
+    "email_password_required": "البريد الإلكتروني وكلمة المرور مطلوبان",
+    "account_pending": "الحساب في انتظار التحقق. يرجى انتظار موافقة المسؤول.",
+    "account_not_verified": "الحساب غير مُتحقق منه",
+    "access_token_required": "رمز الوصول مطلوب",
+    "authentication_required": "المصادقة مطلوبة",
+    "user_not_found": "المستخدم غير موجود",
+    "token_valid": "الرمز صالح",
+    "invalid_unverified_token": "رمز غير صحيح أو غير مُتحقق منه",
+    "invalid_or_expired_token": "رمز غير صحيح أو منتهي الصلاحية",
+    "admin_access_required": "الوصول الإداري مطلوب",
+    "instructor_access_required": "الوصول للمدرب مطلوب",
+    "verified_user_access_required": "الوصول للمستخدم المُتحقق مطلوب",
+    "user_role_updated": "تم تحديث دور المستخدم بنجاح",
+    "user_verification_updated": "تم تحديث حالة التحقق من المستخدم بنجاح",
+    "user_created": "تم إنشاء المستخدم بنجاح",
+    "user_updated": "تم تحديث المستخدم بنجاح",
+    "user_deleted": "تم حذف المستخدم بنجاح",
+    "user_plan_removed": "تم إزالة خطة المستخدم بنجاح",
+    "user_trial_stopped": "تم إيقاف التجربة المجانية للمستخدم بنجاح",
+    "first_name_last_name_email_required": "الاسم الأول واسم العائلة والبريد الإلكتروني مطلوبة",
+    "email_already_in_use": "البريد الإلكتروني مستخدم بالفعل",
+    "user_with_email_exists": "مستخدم بهذا البريد الإلكتروني موجود بالفعل",
+    "department_manager_assignment_required": "يجب تعيين مدير القسم إلى قسم"
+  },
+  "products": {
+    "not_found": "المنتج غير موجود",
+    "created": "تم إنشاء المنتج بنجاح",
+    "updated": "تم تحديث المنتج بنجاح",
+    "deleted": "تم حذف المنتج بنجاح",
+    "list_retrieved": "تم جلب المنتجات بنجاح",
+    "name_required": "اسم المنتج مطلوب",
+    "name_already_exists": "منتج بهذا الاسم موجود بالفعل"
+  },
+  "services": {
+    "not_found": "الخدمة غير موجودة",
+    "created": "تم إنشاء الخدمة بنجاح",
+    "updated": "تم تحديث الخدمة بنجاح",
+    "deleted": "تم حذف الخدمة بنجاح",
+    "list_retrieved": "تم جلب الخدمات بنجاح",
+    "title_description_required": "العنوان والوصف مطلوبان",
+    "failed_to_fetch": "فشل جلب الخدمة",
+    "failed_to_create": "فشل إنشاء الخدمة",
+    "failed_to_update": "فشل تحديث الخدمة",
+    "failed_to_delete": "فشل حذف الخدمة"
+  },
+  "departments": {
+    "not_found": "القسم غير موجود",
+    "created": "تم إنشاء القسم بنجاح",
+    "updated": "تم تحديث القسم بنجاح",
+    "deleted": "تم حذف القسم بنجاح",
+    "list_retrieved": "تم جلب الأقسام بنجاح",
+    "failed_to_fetch": "فشل جلب القسم",
+    "failed_to_fetch_sections": "فشل جلب أقسام الأقسام",
+    "failed_to_fetch_list": "فشل جلب الأقسام"
+  },
+  "events": {
+    "not_found": "الفعالية غير موجودة",
+    "created": "تم إنشاء الفعالية بنجاح",
+    "updated": "تم تحديث الفعالية بنجاح",
+    "deleted": "تم حذف الفعالية بنجاح",
+    "list_retrieved": "تم جلب الفعاليات بنجاح",
+    "endpoint_ready": "نقطة نهاية الأحداث - جاهزة للتنفيذ"
+  },
+  "news": {
+    "not_found": "الخبر غير موجود",
+    "created": "تم إنشاء الخبر بنجاح",
+    "updated": "تم تحديث الخبر بنجاح",
+    "deleted": "تم حذف الخبر بنجاح",
+    "list_retrieved": "تم جلب الأخبار بنجاح"
+  },
+  "users": {
+    "not_found": "المستخدم غير موجود",
+    "created": "تم إنشاء المستخدم بنجاح",
+    "updated": "تم تحديث المستخدم بنجاح",
+    "deleted": "تم حذف المستخدم بنجاح",
+    "list_retrieved": "تم جلب المستخدمين بنجاح"
+  },
+  "staff": {
+    "not_found": "عضو الفريق غير موجود",
+    "failed_to_fetch": "فشل جلب عضو الفريق",
+    "created": "تم إنشاء عضو الفريق بنجاح",
+    "updated": "تم تحديث عضو الفريق بنجاح",
+    "deleted": "تم حذف عضو الفريق بنجاح",
+    "id_required": "معرف عضو الفريق مطلوب",
+    "name_title_required": "الاسم والعنوان مطلوبان"
+  },
+  "laboratories": {
+    "not_found": "المختبر غير موجود",
+    "created": "تم إنشاء المختبر بنجاح",
+    "updated": "تم تحديث المختبر بنجاح",
+    "deleted": "تم حذف المختبر بنجاح",
+    "name_required": "اسم المختبر مطلوب"
+  },
+  "department_sections": {
+    "not_found": "قسم القسم غير موجود",
+    "created": "تم إنشاء قسم القسم بنجاح",
+    "updated": "تم تحديث قسم القسم بنجاح",
+    "deleted": "تم حذف قسم القسم بنجاح",
+    "id_required": "معرف القسم مطلوب",
+    "name_slug_required": "الاسم والرابط المختصر مطلوبان",
+    "slug_exists": "قسم بهذا الرابط المختصر موجود بالفعل"
+  },
+  "department_staff": {
+    "assignments_updated": "تم تحديث تعيينات موظفي القسم بنجاح",
+    "removed": "تم إزالة عضو الفريق من القسم بنجاح",
+    "id_required": "معرف القسم ومعرف عضو الفريق مطلوبان",
+    "assignment_not_found": "التعيين غير موجود",
+    "department_id_required": "معرف القسم مطلوب",
+    "staff_ids_required": "مصفوفة معرفات الموظفين مطلوبة",
+    "no_access": "ليس لديك حق الوصول إلى هذا القسم"
+  },
+  "courses": {
+    "not_found": "الدورة غير موجودة",
+    "created": "تم إنشاء الدورة بنجاح",
+    "updated": "تم تحديث الدورة بنجاح",
+    "deleted": "تم حذف الدورة بنجاح",
+    "list_retrieved": "تم جلب الدورات بنجاح",
+    "lesson_not_found": "الدرس غير موجود",
+    "id_required": "معرف الدورة مطلوب",
+    "fields_required": "العنوان والفئة والمستوى ونوع التسليم مطلوبة",
+    "no_access": "ليس لديك حق الوصول إلى هذه الدورة"
+  },
+  "course_orders": {
+    "not_found": "طلب الدورة غير موجود",
+    "updated": "تم تحديث طلب الدورة بنجاح",
+    "id_required": "معرف طلب الدورة مطلوب"
+  },
+  "home_page": {
+    "content_saved": "تم حفظ محتوى الصفحة الرئيسية بنجاح",
+    "failed_to_save": "فشل حفظ محتوى الصفحة الرئيسية",
+    "slider_created": "تم إنشاء شريحة البطل بنجاح",
+    "slider_updated": "تم تحديث شريحة البطل بنجاح",
+    "slider_deleted": "تم حذف شريحة البطل بنجاح",
+    "slider_error": "فشل حفظ شريحة البطل"
+  },
+  "validation": {
+    "session_id_required": "معرف الجلسة مطلوب",
+    "id_required": "المعرف مطلوب",
+    "department_id_required": "معرف القسم مطلوب",
+    "page_key_required": "مفتاح الصفحة مطلوب"
+  },
+  "page_content": {
+    "saved": "تم حفظ محتوى الصفحة بنجاح",
+    "updated": "تم تحديث محتوى الصفحة بنجاح",
+    "deleted": "تم حذف محتوى الصفحة بنجاح",
+    "not_found": "محتوى الصفحة غير موجود"
+  },
+  "api": {
+    "health_ok": "واجهة برمجة التطبيقات الخلفية لـ EPRI قيد التشغيل",
+    "internal_error": "خطأ داخلي في الخادم"
+  },
+  "visitor_stats": {
+    "visit_tracked": "تم تتبع الزيارة بنجاح",
+    "failed_to_track": "فشل تتبع الزيارة",
+    "failed_to_get_stats": "فشل الحصول على الإحصائيات",
+    "counter_reset": "تم إعادة تعيين العداد بنجاح",
+    "failed_to_reset": "فشل إعادة تعيين العداد",
+    "failed_to_generate_session": "فشل إنشاء معرف الجلسة"
+  },
+  "service_center": {
+    "not_found": "مركز الخدمة غير موجود"
+  },
+  "status": {
+    "pending": "قيد الانتظار",
+    "paid": "مدفوع",
+    "cancelled": "ملغي",
+    "refunded": "مسترد",
+    "active": "نشط",
+    "used": "مستخدم",
+    "expired": "منتهي الصلاحية",
+    "draft": "مسودة",
+    "published": "منشور",
+    "completed": "مكتمل"
+  }
+}
