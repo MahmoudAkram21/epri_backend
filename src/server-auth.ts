@@ -5515,7 +5515,7 @@ app.get(
           where: { department_id: user.department_id },
           select: { id: true },
         });
-        const courseIds = departmentCourses.map((c) => c.id);
+        const courseIds = departmentCourses.map((c: { id: string }) => c.id);
         // Filter orders that have items with these course IDs
         where.items = {
           some: {

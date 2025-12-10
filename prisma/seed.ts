@@ -129,7 +129,7 @@ async function main() {
     categoryData.map(async (catData) => {
       // Try to find existing category by matching the English title in JSON
       const allCategories = await prisma.category.findMany();
-      const existing = allCategories.find((cat) => {
+      const existing = allCategories.find((cat: any) => {
         const title = cat.title as any;
         return title?.en === (catData.title as any).en;
       });
@@ -1396,7 +1396,7 @@ async function main() {
             ? typeof courseData.instructor_name === "string"
               ? toJson(courseData.instructor_name, courseData.instructor_name)
               : courseData.instructor_name
-            : Prisma.JsonNull,
+            : null,
           category:
             typeof courseData.category === "string"
               ? toJson(courseData.category, courseData.category)
@@ -1422,7 +1422,7 @@ async function main() {
                   (courseData as any).meeting_location
                 )
               : (courseData as any).meeting_location
-            : Prisma.JsonNull,
+            : null,
           schedule_info: (courseData as any).schedule_info
             ? typeof (courseData as any).schedule_info === "string"
               ? toJson(
@@ -1430,7 +1430,7 @@ async function main() {
                   (courseData as any).schedule_info
                 )
               : (courseData as any).schedule_info
-            : Prisma.JsonNull,
+            : null,
         },
         create: {
           id: courseData.id,
@@ -1441,7 +1441,7 @@ async function main() {
             ? typeof courseData.instructor_name === "string"
               ? toJson(courseData.instructor_name, courseData.instructor_name)
               : courseData.instructor_name
-            : Prisma.JsonNull,
+            : null,
           category:
             typeof courseData.category === "string"
               ? toJson(courseData.category, courseData.category)
@@ -1467,7 +1467,7 @@ async function main() {
                   (courseData as any).meeting_location
                 )
               : (courseData as any).meeting_location
-            : Prisma.JsonNull,
+            : null,
           schedule_info: (courseData as any).schedule_info
             ? typeof (courseData as any).schedule_info === "string"
               ? toJson(
@@ -1475,7 +1475,7 @@ async function main() {
                   (courseData as any).schedule_info
                 )
               : (courseData as any).schedule_info
-            : Prisma.JsonNull,
+            : null,
         },
       })
     )
@@ -1794,7 +1794,7 @@ async function main() {
                   (courseData as any).meeting_location
                 )
               : (courseData as any).meeting_location
-            : Prisma.JsonNull,
+            : null,
           room_number: courseData.room_number || null,
           building: courseData.building || null,
           zoom_link: courseData.zoom_link || null,
@@ -1816,7 +1816,7 @@ async function main() {
                   (courseData as any).instructor_name
                 )
               : (courseData as any).instructor_name
-            : Prisma.JsonNull,
+            : null,
           category:
             typeof courseData.category === "string"
               ? toJson(courseData.category, courseData.category)
@@ -1843,7 +1843,7 @@ async function main() {
                   (courseData as any).meeting_location
                 )
               : (courseData as any).meeting_location
-            : Prisma.JsonNull,
+            : null,
           room_number: courseData.room_number || null,
           building: courseData.building || null,
           zoom_link: courseData.zoom_link || null,
@@ -1857,7 +1857,7 @@ async function main() {
                   (courseData as any).schedule_info
                 )
               : (courseData as any).schedule_info
-            : Prisma.JsonNull,
+            : null,
         },
       })
     )

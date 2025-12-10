@@ -128,24 +128,20 @@ export const requireDepartmentManager = (
   }
 
   if (req.user.role !== "DEPARTMENT_MANAGER") {
-    res
-      .status(403)
-      .json({
-        message:
-          t("auth.department_manager_access_required") ||
-          "Department manager access required",
-      });
+    res.status(403).json({
+      message:
+        t("auth.department_manager_access_required") ||
+        "Department manager access required",
+    });
     return;
   }
 
   if (!req.user.department_id) {
-    res
-      .status(403)
-      .json({
-        message:
-          t("auth.department_not_assigned") ||
-          "User is not assigned to a department",
-      });
+    res.status(403).json({
+      message:
+        t("auth.department_not_assigned") ||
+        "User is not assigned to a department",
+    });
     return;
   }
 
