@@ -18,7 +18,7 @@ COPY . .
 RUN npm run build
 
 # Verify build succeeded
-RUN ls -la dist/ && test -f dist/server-auth.js
+RUN ls -la dist/src/ && test -f dist/src/server-auth.js
 
 # Expose port
 EXPOSE 5000

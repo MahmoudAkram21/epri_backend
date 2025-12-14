@@ -9,7 +9,7 @@
     "dev:simple": "nodemon src/server-minimal.ts",
     "dev:api": "nodemon src/server.ts",
     "build": "npx prisma generate && tsc",
-    "start": "node dist/server-auth.js",
+    "start": "node dist/src/server-auth.js",
     "prisma:generate": "npx prisma generate",
     "prisma:migrate": "npx prisma migrate dev",
     "prisma:studio": "npx prisma studio",
