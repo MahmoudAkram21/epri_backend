@@ -1294,12 +1294,12 @@ async function main() {
                 ? typeof courseData.meeting_location === "string"
                     ? toJson(courseData.meeting_location, courseData.meeting_location)
                     : courseData.meeting_location
-                : client_1.Prisma.JsonNull,
+                : null,
             schedule_info: courseData.schedule_info
                 ? typeof courseData.schedule_info === "string"
                     ? toJson(courseData.schedule_info, courseData.schedule_info)
                     : courseData.schedule_info
-                : client_1.Prisma.JsonNull,
+                : null,
         },
         create: {
             id: courseData.id,
@@ -1330,12 +1330,12 @@ async function main() {
                 ? typeof courseData.meeting_location === "string"
                     ? toJson(courseData.meeting_location, courseData.meeting_location)
                     : courseData.meeting_location
-                : client_1.Prisma.JsonNull,
+                : null,
             schedule_info: courseData.schedule_info
                 ? typeof courseData.schedule_info === "string"
                     ? toJson(courseData.schedule_info, courseData.schedule_info)
                     : courseData.schedule_info
-                : client_1.Prisma.JsonNull,
+                : null,
         },
     })));
     console.log(`✅ ${courses.length} courses created with comprehensive data:`);
@@ -1620,7 +1620,7 @@ async function main() {
                 ? typeof courseData.meeting_location === "string"
                     ? toJson(courseData.meeting_location, courseData.meeting_location)
                     : courseData.meeting_location
-                : client_1.Prisma.JsonNull,
+                : null,
             room_number: courseData.room_number || null,
             building: courseData.building || null,
             zoom_link: courseData.zoom_link || null,
@@ -1639,7 +1639,7 @@ async function main() {
                 ? typeof courseData.instructor_name === "string"
                     ? toJson(courseData.instructor_name, courseData.instructor_name)
                     : courseData.instructor_name
-                : client_1.Prisma.JsonNull,
+                : null,
             category: typeof courseData.category === "string"
                 ? toJson(courseData.category, courseData.category)
                 : courseData.category || toJson("General", "عام"),
@@ -1660,7 +1660,7 @@ async function main() {
                 ? typeof courseData.meeting_location === "string"
                     ? toJson(courseData.meeting_location, courseData.meeting_location)
                     : courseData.meeting_location
-                : client_1.Prisma.JsonNull,
+                : null,
             room_number: courseData.room_number || null,
             building: courseData.building || null,
             zoom_link: courseData.zoom_link || null,
@@ -1671,7 +1671,7 @@ async function main() {
                 ? typeof courseData.schedule_info === "string"
                     ? toJson(courseData.schedule_info, courseData.schedule_info)
                     : courseData.schedule_info
-                : client_1.Prisma.JsonNull,
+                : null,
         },
     })));
     console.log(`✅ ${departmentCourses.length} department-specific courses created:`);
@@ -2285,12 +2285,12 @@ async function main() {
                     ? typeof lessonData.content === "string"
                         ? JSON.parse(lessonData.content)
                         : lessonData.content
-                    : client_1.Prisma.JsonNull,
+                    : null,
                 notes: lessonData.notes
                     ? typeof lessonData.notes === "string"
                         ? toJson(lessonData.notes, lessonData.notes)
                         : lessonData.notes
-                    : client_1.Prisma.JsonNull,
+                    : null,
                 attachments: lessonData.attachments
                     ? JSON.parse(lessonData.attachments)
                     : null,
@@ -2313,12 +2313,12 @@ async function main() {
                     ? typeof lessonData.content === "string"
                         ? JSON.parse(lessonData.content)
                         : lessonData.content
-                    : client_1.Prisma.JsonNull,
+                    : null,
                 notes: lessonData.notes
                     ? typeof lessonData.notes === "string"
                         ? toJson(lessonData.notes, lessonData.notes)
                         : lessonData.notes
-                    : client_1.Prisma.JsonNull,
+                    : null,
                 attachments: lessonData.attachments
                     ? JSON.parse(lessonData.attachments)
                     : null,

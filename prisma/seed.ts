@@ -1396,7 +1396,7 @@ async function main() {
             ? typeof courseData.instructor_name === "string"
               ? toJson(courseData.instructor_name, courseData.instructor_name)
               : courseData.instructor_name
-            : null,
+            : Prisma.JsonNull,
           category:
             typeof courseData.category === "string"
               ? toJson(courseData.category, courseData.category)
@@ -1441,7 +1441,7 @@ async function main() {
             ? typeof courseData.instructor_name === "string"
               ? toJson(courseData.instructor_name, courseData.instructor_name)
               : courseData.instructor_name
-            : null,
+            : Prisma.JsonNull,
           category:
             typeof courseData.category === "string"
               ? toJson(courseData.category, courseData.category)
