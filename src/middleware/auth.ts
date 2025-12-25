@@ -78,6 +78,7 @@ export const authenticateToken = async (
   }
 };
 
+// Admin middleware (includes Super Admin)
 export const requireAdmin = (
   req: Request,
   res: Response,
@@ -89,12 +90,91 @@ export const requireAdmin = (
     return;
   }
 
-  if (req.user.role !== "ADMIN") {
+  if (req.user.role !== "ADMIN" && req.user.role !== "SUPER_ADMIN") {
     res.status(403).json({ message: t("auth.admin_access_required") });
     return;
   }
 
   next();
+};
+
+// Super Admin only middleware
+export const requireSuperAdmin = (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void => {
+  const t = getT(req);
+  if (!req.user) {
+    res.status(401).json({ message: t("auth.authentication_required") });
+    return;
+  }
+
+  if (req.user.role !== "SUPER_ADMIN") {
+    res.status(403).json({ message: t("auth.super_admin_access_required") });
+    return;
+  }
+
+  next();
+};
+
+// Permission-based middleware (checks AdminPermission table)
+export const requirePermission = (
+  resource: string,
+  action: "view" | "create" | "edit" | "delete" | "approve"
+) => {
+  return async (
+    req: Request,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    const t = getT(req);
+    if (!req.user) {
+      res.status(401).json({ message: t("auth.authentication_required") });
+      return;
+    }
+
+    // Super Admin has all permissions
+    if (req.user.role === "SUPER_ADMIN") {
+      next();
+      return;
+    }
+
+    // Regular Admin needs specific permission
+    if (req.user.role === "ADMIN") {
+      const permission = await prisma.adminPermission.findUnique({
+        where: {
+          admin_id_resource: {
+            admin_id: req.user.id,
+            resource: resource,
+          },
+        },
+      });
+
+      if (!permission) {
+        res.status(403).json({ message: t("auth.permission_denied") });
+        return;
+      }
+
+      const hasPermission =
+        (action === "view" && permission.can_view) ||
+        (action === "create" && permission.can_create) ||
+        (action === "edit" && permission.can_edit) ||
+        (action === "delete" && permission.can_delete) ||
+        (action === "approve" && permission.can_approve);
+
+      if (!hasPermission) {
+        res.status(403).json({ message: t("auth.permission_denied") });
+        return;
+      }
+
+      next();
+      return;
+    }
+
+    // Other roles don't have permission
+    res.status(403).json({ message: t("auth.permission_denied") });
+  };
 };
 
 export const requireInstructor = (
@@ -108,7 +188,7 @@ export const requireInstructor = (
     return;
   }
 
-  if (!["ADMIN", "INSTRUCTOR", "DEPARTMENT_MANAGER"].includes(req.user.role)) {
+  if (!["SUPER_ADMIN", "ADMIN", "INSTRUCTOR", "DEPARTMENT_MANAGER"].includes(req.user.role)) {
     res.status(403).json({ message: t("auth.instructor_access_required") });
     return;
   }
@@ -159,18 +239,21 @@ export const requireVerifiedUser = (
     return;
   }
 
-  if (
-    ![
-      "STUDENT",
-      "RESEARCHER",
-      "INSTRUCTOR",
-      "ADMIN",
-      "DEPARTMENT_MANAGER",
-    ].includes(req.user.role)
-  ) {
-    res.status(403).json({ message: t("auth.verified_user_access_required") });
+  // Check for allowed roles (all roles)
+  const allowedRoles = [
+    "SUPER_ADMIN",
+    "ADMIN",
+    "EMPLOYEE",
+    "INSTRUCTOR",
+    "DEPARTMENT_MANAGER",
+    "GUEST",
+  ];
+
+  if (!allowedRoles.includes(req.user.role)) {
+    res.status(403).json({ message: t("auth.invalid_role") });
     return;
   }
 
   next();
 };
+```

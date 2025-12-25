@@ -26,12 +26,12 @@ enum TicketStatus {
 }
 
 enum UserRole {
-  STUDENT
-  RESEARCHER
-  INSTRUCTOR
+  SUPER_ADMIN
   ADMIN
-  GUEST
+  EMPLOYEE
   DEPARTMENT_MANAGER
+  GUEST
+  INSTRUCTOR
 }
 
 enum EventStatus {
@@ -89,10 +89,10 @@ model User {
   email         String   @unique
   phone         String?
   password_hash String?
-  role          UserRole @default(STUDENT)
+  role          UserRole @default(GUEST)
   is_verified   Boolean  @default(false)
 
-  // Department assignment for DEPARTMENT_MANAGER role
+  // Department assignment for DEPARTMENT_MANAGER role  
   department_id String?
   department    Department? @relation(fields: [department_id], references: [id], onDelete: SetNull)
 
@@ -108,14 +108,75 @@ model User {
   updated_at DateTime @updatedAt
 
   // Relations
-  event_orders  EventOrder[]
-  tickets       Ticket[]
-  course_orders CourseOrder[]
-  enrollments   CourseEnrollment[]
-  reviews       Review[]
-  courses       Course[] // Courses created by this user (if INSTRUCTOR or DEPARTMENT_MANAGER)
+  event_orders            EventOrder[]
+  tickets                 Ticket[]
+  course_orders           CourseOrder[]
+  enrollments             CourseEnrollment[]
+  reviews                 Review[]
+  courses                 Course[]               @relation("CourseInstructor") // Courses where user is instructor
+  submitted_courses       Course[]               @relation("CourseSubmissions") // Courses submitted for approval
+  approved_courses        Course[]               @relation("CourseApprovals") // Courses approved by this user
+  admin_permissions       AdminPermission[] // Permissions for ADMIN role
+  employee_info           Employee? // Employee-specific data
+  department_manager_info DepartmentManagerInfo? // Department Manager-specific data
 
   @@map("user")
+}
+
+// Admin Permission Management
+model AdminPermission {
+  id          String   @id @default(uuid())
+  admin_id    String // Foreign key to User
+  resource    String // e.g., "users", "courses", "events", "departments", "course_approvals"
+  can_view    Boolean  @default(false)
+  can_create  Boolean  @default(false)
+  can_edit    Boolean  @default(false)
+  can_delete  Boolean  @default(false)
+  can_approve Boolean  @default(false) // For approving courses created by Department Managers
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  admin User @relation(fields: [admin_id], references: [id], onDelete: Cascade)
+
+  @@unique([admin_id, resource])
+  @@map("admin_permission")
+}
+
+// Employee Information
+model Employee {
+  id                String    @id @default(uuid())
+  user_id           String    @unique // Foreign key to User
+  employee_number   String?   @unique
+  hire_date         DateTime?
+  position          Json? // { "en": "...", "ar": "..." }
+  salary            Decimal?  @db.Decimal(10, 2)
+  contract_type     String? // full_time, part_time, contractor
+  emergency_contact Json? // { name, phone, relation }
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("employee")
+}
+
+// Department Manager Information
+model DepartmentManagerInfo {
+  id                  String    @id @default(uuid())
+  user_id             String    @unique // Foreign key to User
+  manager_since       DateTime?
+  responsibilities    Json? // { "en": "...", "ar": "..." }
+  qualifications      Json? // Array of qualifications
+  performance_metrics Json? // Custom metrics
+  budget_authority    Decimal?  @db.Decimal(12, 2)
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("department_manager_info")
 }
 
 // Event Categories
@@ -307,6 +368,14 @@ model Course {
   objectives   Json? // Array of learning objectives
   requirements Json? // Array of prerequisites
 
+  // Approval Workflow Fields
+  approval_status  String    @default("pending") // pending, approved, rejected
+  submitted_by_id  String? // User who created/submitted the course
+  approved_by_id   String? // Admin/SuperAdmin who approved
+  submitted_at     DateTime? // When course was submitted for approval
+  approved_at      DateTime? // When course was approved
+  rejection_reason String?   @db.Text // Reason if rejected
+
   // Stats
   rating_average   Float @default(0.0)
   rating_count     Int   @default(0)
@@ -316,11 +385,13 @@ model Course {
   updated_at DateTime @updatedAt
 
   // Relations
-  orderItems  CourseOrderItem[]
-  enrollments CourseEnrollment[]
-  instructor  User?              @relation(fields: [instructor_id], references: [id], onDelete: SetNull)
-  lessons     Lesson[]
-  reviews     Review[]
+  orderItems   CourseOrderItem[]
+  enrollments  CourseEnrollment[]
+  instructor   User?              @relation("CourseInstructor", fields: [instructor_id], references: [id], onDelete: SetNull)
+  submitted_by User?              @relation("CourseSubmissions", fields: [submitted_by_id], references: [id], onDelete: SetNull)
+  approved_by  User?              @relation("CourseApprovals", fields: [approved_by_id], references: [id], onDelete: SetNull)
+  lessons      Lesson[]
+  reviews      Review[]
 
   @@map("course")
 }
@@ -484,6 +555,25 @@ model DepartmentStaff {
   @@map("department_staff")
 }
 
+model LaboratoryStaff {
+  id            String @id @default(uuid())
+  laboratory_id String
+  staff_id      String
+
+  // Optional: Position in this specific lab
+  position Json? // { "en": "Lab Technician", "ar": "فني مختبر" }
+
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  // Relations
+  laboratory Laboratory @relation(fields: [laboratory_id], references: [id], onDelete: Cascade)
+  staff      Staff      @relation(fields: [staff_id], references: [id], onDelete: Cascade)
+
+  @@unique([laboratory_id, staff_id])
+  @@map("laboratory_staff")
+}
+
 model Staff {
   id                     String  @id @default(uuid())
   name                   Json // { "en": "English name", "ar": "Arabic name" }
@@ -540,8 +630,9 @@ model Staff {
   updated_at DateTime @updatedAt
 
   // Relations
-  departments    DepartmentStaff[]
-  serviceCenters ServiceCenterStaff[]
+  departments      DepartmentStaff[]
+  serviceCenters   ServiceCenterStaff[]
+  laboratoryStaffs LaboratoryStaff[]
 
   @@map("staff")
 }
@@ -595,8 +686,9 @@ model Laboratory {
   updated_at DateTime @updatedAt
 
   // Relations
-  department Department?        @relation(fields: [department_id], references: [id])
-  section    DepartmentSection? @relation(fields: [section_id], references: [id])
+  department       Department?        @relation(fields: [department_id], references: [id])
+  section          DepartmentSection? @relation(fields: [section_id], references: [id])
+  laboratoryStaffs LaboratoryStaff[]
 
   @@map("laboratory")
 }

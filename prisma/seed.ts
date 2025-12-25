@@ -31,7 +31,7 @@ async function main() {
         last_name: "Mohamed",
         email: "student@epri.edu",
         password_hash: hashedPassword,
-        role: "STUDENT",
+        role: "GUEST",
         is_verified: true,
         phone: "+201234567891",
       },
@@ -44,7 +44,7 @@ async function main() {
         last_name: "Ali",
         email: "researcher@epri.edu",
         password_hash: hashedPassword,
-        role: "RESEARCHER",
+        role: "INSTRUCTOR",
         is_verified: true,
         phone: "+201234567892",
       },
@@ -1045,7 +1045,7 @@ async function main() {
         "Advanced course covering sophisticated geological analysis techniques, seismic interpretation, and structural geology for petroleum exploration. Includes hands-on training with industry-standard software.",
       image:
         "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=800&h=600&fit=crop",
-      instructor_id: users.find((u) => u.role === "RESEARCHER")?.id,
+      instructor_id: users.find((u) => u.role === "INSTRUCTOR")?.id,
       instructor_name: "Dr. Fatima Ali",
       category: toJson("Geology & Geophysics", "الجيولوجيا والجيوفيزياء"),
       price: 499.0,
@@ -1149,7 +1149,7 @@ async function main() {
         "Learn about environmental regulations, impact assessment, and sustainable practices in petroleum operations. Covers both theoretical concepts and practical case studies.",
       image:
         "https://images.unsplash.com/photo-1574263867128-cddc47ba885e?w=800&h=600&fit=crop",
-      instructor_id: users.find((u) => u.role === "RESEARCHER")?.id,
+      instructor_id: users.find((u) => u.role === "INSTRUCTOR")?.id,
       instructor_name: "Dr. Fatima Ali",
       category: toJson("Environmental Studies", "الدراسات البيئية"),
       price: 399.0,
@@ -1295,7 +1295,7 @@ async function main() {
         "Beginner-friendly introduction to geophysical methods used in petroleum exploration. Covers seismic data acquisition, processing, and basic interpretation techniques.",
       image:
         "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=800&h=600&fit=crop",
-      instructor_id: users.find((u) => u.role === "RESEARCHER")?.id,
+      instructor_id: users.find((u) => u.role === "INSTRUCTOR")?.id,
       instructor_name: "Dr. Fatima Ali",
       category: "Geology & Geophysics",
       price: 0.0,
@@ -1418,17 +1418,17 @@ async function main() {
           meeting_location: (courseData as any).meeting_location
             ? typeof (courseData as any).meeting_location === "string"
               ? toJson(
-                  (courseData as any).meeting_location,
-                  (courseData as any).meeting_location
-                )
+                (courseData as any).meeting_location,
+                (courseData as any).meeting_location
+              )
               : (courseData as any).meeting_location
             : null,
           schedule_info: (courseData as any).schedule_info
             ? typeof (courseData as any).schedule_info === "string"
               ? toJson(
-                  (courseData as any).schedule_info,
-                  (courseData as any).schedule_info
-                )
+                (courseData as any).schedule_info,
+                (courseData as any).schedule_info
+              )
               : (courseData as any).schedule_info
             : null,
         },
@@ -1463,17 +1463,17 @@ async function main() {
           meeting_location: (courseData as any).meeting_location
             ? typeof (courseData as any).meeting_location === "string"
               ? toJson(
-                  (courseData as any).meeting_location,
-                  (courseData as any).meeting_location
-                )
+                (courseData as any).meeting_location,
+                (courseData as any).meeting_location
+              )
               : (courseData as any).meeting_location
             : null,
           schedule_info: (courseData as any).schedule_info
             ? typeof (courseData as any).schedule_info === "string"
               ? toJson(
-                  (courseData as any).schedule_info,
-                  (courseData as any).schedule_info
-                )
+                (courseData as any).schedule_info,
+                (courseData as any).schedule_info
+              )
               : (courseData as any).schedule_info
             : null,
         },
@@ -1790,9 +1790,9 @@ async function main() {
           meeting_location: (courseData as any).meeting_location
             ? typeof (courseData as any).meeting_location === "string"
               ? toJson(
-                  (courseData as any).meeting_location,
-                  (courseData as any).meeting_location
-                )
+                (courseData as any).meeting_location,
+                (courseData as any).meeting_location
+              )
               : (courseData as any).meeting_location
             : null,
           room_number: courseData.room_number || null,
@@ -1812,9 +1812,9 @@ async function main() {
           instructor_name: (courseData as any).instructor_name
             ? typeof (courseData as any).instructor_name === "string"
               ? toJson(
-                  (courseData as any).instructor_name,
-                  (courseData as any).instructor_name
-                )
+                (courseData as any).instructor_name,
+                (courseData as any).instructor_name
+              )
               : (courseData as any).instructor_name
             : null,
           category:
@@ -1839,9 +1839,9 @@ async function main() {
           meeting_location: (courseData as any).meeting_location
             ? typeof (courseData as any).meeting_location === "string"
               ? toJson(
-                  (courseData as any).meeting_location,
-                  (courseData as any).meeting_location
-                )
+                (courseData as any).meeting_location,
+                (courseData as any).meeting_location
+              )
               : (courseData as any).meeting_location
             : null,
           room_number: courseData.room_number || null,
@@ -1853,9 +1853,9 @@ async function main() {
           schedule_info: (courseData as any).schedule_info
             ? typeof (courseData as any).schedule_info === "string"
               ? toJson(
-                  (courseData as any).schedule_info,
-                  (courseData as any).schedule_info
-                )
+                (courseData as any).schedule_info,
+                (courseData as any).schedule_info
+              )
               : (courseData as any).schedule_info
             : null,
         },
@@ -5764,10 +5764,158 @@ async function main() {
     },
   ];
 
-  // TODO: Create laboratories after Prisma client is regenerated
-  console.log(
-    `⚠️  Laboratory creation skipped - will be added after schema migration`
+  // Create laboratories
+  console.log("🔬 Creating laboratories...");
+
+  const laboratories = await Promise.all(
+    laboratoriesData.map((lab) =>
+      prisma.laboratory.upsert({
+        where: { id: lab.id },
+        update: {
+          name: toJson(lab.name, lab.name),
+          description: toJson(lab.description, lab.description),
+          image: lab.image,
+          head_name: toJson(lab.head_name, lab.head_name),
+          head_title: toJson(lab.head_title, lab.head_title),
+          head_academic_title: toJson(lab.head_academic_title, lab.head_academic_title),
+          head_picture: lab.head_picture,
+          head_cv_url: lab.head_cv_url,
+          head_email: lab.head_email,
+          head_bio: toJson(lab.head_bio, lab.head_bio),
+          address: toJson(lab.address, lab.address),
+          phone: lab.phone,
+          alternative_phone: lab.alternative_phone,
+          fax: lab.fax,
+          email: lab.email,
+          website: lab.website,
+          established_year: lab.established_year,
+          facilities: toJson(lab.facilities, lab.facilities),
+          equipment_list: toJson(lab.equipment_list, lab.equipment_list),
+          research_areas: toJson(lab.research_areas, lab.research_areas),
+          services_offered: toJson(lab.services_offered, lab.services_offered),
+          staff_count: lab.staff_count,
+          students_count: lab.students_count,
+          department_id: lab.department_id,
+          section_id: lab.section_id || null,
+          building: lab.building,
+          floor: lab.floor,
+          room_numbers: lab.room_numbers,
+          is_active: lab.is_active,
+          is_featured: lab.is_featured,
+          display_order: lab.display_order,
+        },
+        create: {
+          id: lab.id,
+          name: toJson(lab.name, lab.name),
+          description: toJson(lab.description, lab.description),
+          image: lab.image,
+          head_name: toJson(lab.head_name, lab.head_name),
+          head_title: toJson(lab.head_title, lab.head_title),
+          head_academic_title: toJson(lab.head_academic_title, lab.head_academic_title),
+          head_picture: lab.head_picture,
+          head_cv_url: lab.head_cv_url,
+          head_email: lab.head_email,
+          head_bio: toJson(lab.head_bio, lab.head_bio),
+          address: toJson(lab.address, lab.address),
+          phone: lab.phone,
+          alternative_phone: lab.alternative_phone,
+          fax: lab.fax,
+          email: lab.email,
+          website: lab.website,
+          established_year: lab.established_year,
+          facilities: toJson(lab.facilities, lab.facilities),
+          equipment_list: toJson(lab.equipment_list, lab.equipment_list),
+          research_areas: toJson(lab.research_areas, lab.research_areas),
+          services_offered: toJson(lab.services_offered, lab.services_offered),
+          staff_count: lab.staff_count,
+          students_count: lab.students_count,
+          department_id: lab.department_id,
+          section_id: lab.section_id || null,
+          building: lab.building,
+          floor: lab.floor,
+          room_numbers: lab.room_numbers,
+          is_active: lab.is_active,
+          is_featured: lab.is_featured,
+          display_order: lab.display_order,
+        },
+      })
+    )
   );
+
+  console.log(`✅ Created ${laboratories.length} laboratories with full details and department links`);
+
+  // ============================================
+  // ASSIGN STAFF TO PETROLEUM RESEARCH LABORATORIES
+  // ============================================
+  console.log("👥 Assigning staff to petroleum research laboratories...");
+
+  const allStaffMembers = await prisma.staff.findMany();
+  const laboratoryStaffAssignments = [];
+
+  // Corrosion Lab - Assign 3 staff
+  const corrosionLab = laboratories.find((lab: any) => lab.id === "corrosion-lab");
+  if (corrosionLab && allStaffMembers.length > 0) {
+    for (let i = 0; i < Math.min(3, allStaffMembers.length); i++) {
+      const staffMember = allStaffMembers[i];
+      if (staffMember) {
+        laboratoryStaffAssignments.push({
+          laboratory_id: corrosionLab.id,
+          staff_id: staffMember.id,
+          position: i === 0 ? { en: "Lab Director", ar: "مدير المختبر" } : i === 1 ? { en: "Senior Researcher", ar: "باحث أول" } : { en: "Lab Technician", ar: "فني مختبر" }
+        });
+      }
+    }
+  }
+
+  // Roads Lab
+  const roadsLab = laboratories.find((lab: any) => lab.id === "roads-lab");
+  if (roadsLab && allStaffMembers.length > 3) {
+    for (let i = 3; i < Math.min(6, allStaffMembers.length); i++) {
+      const staffMember = allStaffMembers[i];
+      if (staffMember) {
+        laboratoryStaffAssignments.push({
+          laboratory_id: roadsLab.id,
+          staff_id: staffMember.id,
+          position: i === 3 ? { en: "Lab Coordinator", ar: "منسق المختبر" } : { en: "Research Assistant", ar: "مساعد باحث" }
+        });
+      }
+    }
+  }
+
+  // Other petroleum labs
+  const labAssignments = [
+    { labId: "concrete-lab", staffStart: 6, staffEnd: 8, position: { en: "Materials Specialist", ar: "أخصائي مواد" } },
+    { labId: "soil-mechanics-lab", staffStart: 8, staffEnd: 10, position: { en: "Geotechnical Engineer", ar: "مهندس جيوتقني" } },
+    { labId: "hydraulics-lab", staffStart: 10, staffEnd: 12, position: { en: "Hydraulics Technician", ar: "فني هيدروليكا" } },
+    { labId: "environmental-lab", staffStart: 12, staffEnd: 15, position: { en: "Environmental Analyst", ar: "محلل بيئي" } },
+    { labId: "materials-testing-lab", staffStart: 15, staffEnd: 17, position: { en: "Testing Engineer", ar: "مهندس اختبارات" } },
+    { labId: "surveying-lab", staffStart: 17, staffEnd: 19, position: { en: "Survey Technician", ar: "فني مساحة" } }
+  ];
+
+  labAssignments.forEach(({ labId, staffStart, staffEnd, position }) => {
+    const lab = laboratories.find((l: any) => l.id === labId);
+    if (lab && allStaffMembers.length > staffStart) {
+      for (let i = staffStart; i < Math.min(staffEnd, allStaffMembers.length); i++) {
+        const staffMember = allStaffMembers[i];
+        if (staffMember) {
+          laboratoryStaffAssignments.push({
+            laboratory_id: lab.id,
+            staff_id: staffMember.id,
+            position
+          });
+        }
+      }
+    }
+  });
+
+  // Create assignments
+  for (const assignment of laboratoryStaffAssignments) {
+    await prisma.laboratoryStaff.create({ data: assignment });
+  }
+
+  console.log(`✅ Assigned ${laboratoryStaffAssignments.length} staff to ${new Set(laboratoryStaffAssignments.map(a => a.laboratory_id)).size} petroleum research laboratories`);
+
+
 
   // Update existing data with Unsplash images
   console.log("🔄 Updating existing data with Unsplash images...");

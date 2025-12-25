@@ -1275,17 +1275,17 @@ app.post("/api/admin/events", async (req, res) => {
         ...(address_id && { address_id }),
         categories: category_ids
           ? {
-              create: category_ids.map((categoryId: string) => ({
-                category_id: categoryId,
-              })),
-            }
+            create: category_ids.map((categoryId: string) => ({
+              category_id: categoryId,
+            })),
+          }
           : undefined,
         speakers: speaker_ids
           ? {
-              connect: speaker_ids.map((speakerId: string) => ({
-                id: speakerId,
-              })),
-            }
+            connect: speaker_ids.map((speakerId: string) => ({
+              id: speakerId,
+            })),
+          }
           : undefined,
       },
       include: {
@@ -1905,6 +1905,15 @@ app.get("/api/departments", async (req, res) => {
     const departments = await prisma.department.findMany({
       ...(sectionId ? { where: { section_id: sectionId } } : {}),
       orderBy: { created_at: "desc" },
+      include: {
+        laboratories: {
+          select: {
+            id: true,
+            name: true,
+            description: true,
+          },
+        },
+      },
     });
     res.json({ departments });
   } catch (err: any) {
@@ -1986,7 +1995,7 @@ app.get("/api/departments/:id", async (req, res) => {
     const manager =
       transformedStaff.length > 0
         ? transformedStaff.find((staff: any) => staff.current_admin_position) ||
-          transformedStaff[0]
+        transformedStaff[0]
         : null;
 
     // Enhance department data with related information
@@ -1999,16 +2008,16 @@ app.get("/api/departments/:id", async (req, res) => {
       staff: transformedStaff,
       manager: manager
         ? {
-            ...manager,
-            expertise: manager.research_interests
-              ? typeof manager.research_interests === "string"
-                ? manager.research_interests
-                    .split(",")
-                    .map((s: string) => s.trim())
-                    .filter(Boolean)
-                : []
-              : [],
-          }
+          ...manager,
+          expertise: manager.research_interests
+            ? typeof manager.research_interests === "string"
+              ? manager.research_interests
+                .split(",")
+                .map((s: string) => s.trim())
+                .filter(Boolean)
+              : []
+            : [],
+        }
         : null,
       analysisServices: services.map((service: (typeof services)[0]) => ({
         id: service.id,
@@ -3265,16 +3274,16 @@ app.get("/api/laboratories/:id", async (req, res) => {
       ...lab,
       department: lab.department_name
         ? {
-            id: lab.department_id,
-            name: lab.department_name,
-            description: lab.department_description,
-          }
+          id: lab.department_id,
+          name: lab.department_name,
+          description: lab.department_description,
+        }
         : null,
       section: lab.section_name
         ? {
-            id: lab.section_id,
-            name: lab.section_name,
-          }
+          id: lab.section_id,
+          name: lab.section_name,
+        }
         : null,
     };
 
@@ -3346,15 +3355,15 @@ app.get(
         ...lab,
         department: lab.department_name
           ? {
-              id: lab.department_id,
-              name: lab.department_name,
-            }
+            id: lab.department_id,
+            name: lab.department_name,
+          }
           : null,
         section: lab.section_name
           ? {
-              id: lab.section_id,
-              name: lab.section_name,
-            }
+            id: lab.section_id,
+            name: lab.section_name,
+          }
           : null,
       }));
 
@@ -3750,12 +3759,12 @@ app.get("/api/services/:id", async (req, res) => {
       })),
       centerHead: service.center_head
         ? {
-            ...service.center_head,
-            expertise:
-              typeof service.center_head.expertise === "string"
-                ? JSON.parse(service.center_head.expertise)
-                : service.center_head.expertise,
-          }
+          ...service.center_head,
+          expertise:
+            typeof service.center_head.expertise === "string"
+              ? JSON.parse(service.center_head.expertise)
+              : service.center_head.expertise,
+        }
         : null,
     };
 
@@ -5771,8 +5780,8 @@ app.post(
           }
 
           // Ensure price is a number
-          const itemPrice = typeof courseItem.price === 'string' 
-            ? parseFloat(courseItem.price) 
+          const itemPrice = typeof courseItem.price === 'string'
+            ? parseFloat(courseItem.price)
             : courseItem.price;
 
           return (prisma as any).courseOrderItem.create({
@@ -7642,6 +7651,131 @@ console.log(
 console.log(
   `🎠 Hero Slider endpoints ready: /api/hero-sliders, /api/admin/hero-sliders`
 );
+
+// ============================================
+// STAFF ENDPOINTS
+// ============================================
+
+// Get department staff (aggregates direct department staff + all laboratory staff)
+app.get("/api/departments/:id/staff", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Get direct department staff
+    const departmentStaff = await prisma.departmentStaff.findMany({
+      where: { department_id: id },
+      include: {
+        staff: true,
+      },
+    });
+
+    // Get all laboratories for this department
+    const laboratories = await prisma.laboratory.findMany({
+      where: { department_id: id },
+      include: {
+        laboratoryStaffs: {
+          include: {
+            staff: true,
+          },
+        },
+      },
+    });
+
+    // Create a map to track unique staff and their affiliations
+    const staffMap = new Map();
+
+    // Add direct department staff
+    departmentStaff.forEach((ds: any) => {
+      const staffId = ds.staff.id;
+      if (!staffMap.has(staffId)) {
+        staffMap.set(staffId, {
+          ...ds.staff,
+          laboratories: [],
+          isDepartmentStaff: true,
+        });
+      }
+    });
+
+    // Add laboratory staff
+    laboratories.forEach((lab: any) => {
+      lab.laboratoryStaffs.forEach((labStaff: any) => {
+        const staffId = labStaff.staff.id;
+
+        if (!staffMap.has(staffId)) {
+          staffMap.set(staffId, {
+            ...labStaff.staff,
+            laboratories: [],
+            isDepartmentStaff: false,
+          });
+        }
+
+        // Add laboratory affiliation
+        staffMap.get(staffId).laboratories.push({
+          id: lab.id,
+          name: lab.name,
+          position: labStaff.position,
+        });
+      });
+    });
+
+    const staff = Array.from(staffMap.values());
+
+    res.json({ staff });
+  } catch (error: any) {
+    console.error("Error fetching department staff:", error);
+    res.status(500).json({ message: "Failed to fetch department staff" });
+  }
+});
+
+// Get laboratory staff
+app.get("/api/laboratories/:id/staff", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const laboratoryStaff = await prisma.laboratoryStaff.findMany({
+      where: { laboratory_id: id },
+      include: {
+        staff: true,
+      },
+    });
+
+    const staff = laboratoryStaff.map((ls: any) => ({
+      ...ls.staff,
+      labPosition: ls.position,
+    }));
+
+    res.json({ staff });
+  } catch (error: any) {
+    console.error("Error fetching laboratory staff:", error);
+    res.status(500).json({ message: "Failed to fetch laboratory staff" });
+  }
+});
+
+console.log(
+  `👥 Staff endpoints ready: /api/departments/:id/staff, /api/laboratories/:id/staff`
+);
+
+// Get single laboratory by ID
+app.get("/api/laboratories/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const laboratory = await prisma.laboratory.findUnique({
+      where: { id },
+    });
+
+    if (!laboratory) {
+      return res.status(404).json({ message: "Laboratory not found" });
+    }
+
+    return res.json({ laboratory });
+  } catch (error: any) {
+    console.error("Error fetching laboratory:", error);
+    return res.status(500).json({ message: "Failed to fetch laboratory" });
+  }
+});
+
+console.log(`🔬 Laboratory endpoints ready: /api/laboratories/:id`);
 
 // Graceful shutdown
 process.on("SIGINT", async () => {
