@@ -320,6 +320,9 @@ const parseNumber = (value: any, fallback: number): number => {
   return fallback;
 };
 
+// Trust proxy for reverse proxy environments (Coolify/Traefik)
+app.set("trust proxy", 1);
+
 // Middleware - CORS configuration
 const allowedOrigins = [
   process.env.FRONTEND_URL,
@@ -329,6 +332,10 @@ const allowedOrigins = [
   "https://epri.developteam.site:3000",
   "http://epri.developteam.site:5000",
   "https://epri.developteam.site:5000",
+  "http://epri.qdpapp.site",
+  "https://epri.qdpapp.site",
+  "http://epri-back.qdpapp.site",
+  "https://epri-back.qdpapp.site",
   "http://localhost:3000",
   "http://localhost:3002",
   "https://localhost:3000",
@@ -349,6 +356,9 @@ app.use(
           const originUrl = new URL(origin);
           const isSameDomain =
             originUrl.hostname === "epri.developteam.site" ||
+            originUrl.hostname === "epri.qdpapp.site" ||
+            originUrl.hostname === "epri-back.qdpapp.site" ||
+            originUrl.hostname.endsWith(".qdpapp.site") ||
             originUrl.hostname === "localhost" ||
             originUrl.hostname === "127.0.0.1";
 
@@ -7283,7 +7293,7 @@ if (isHttpsEnabled()) {
     );
   } else {
     // Fallback to HTTP if HTTPS setup fails
-    app.listen(port, () => {
+    app.listen(port, "0.0.0.0", () => {
       console.log(
         `🚀 Server running on HTTP port ${port} (HTTPS setup failed)`
       );
@@ -7293,9 +7303,9 @@ if (isHttpsEnabled()) {
     });
   }
 } else {
-  // Start HTTP server (default)
+  // Start HTTP server (default) - bind to 0.0.0.0 for container environments
 
-  app.listen(port, () => {
+  app.listen(port, "0.0.0.0", () => {
     console.log(`🚀 Server running on HTTP port ${port}`);
     console.log(
       `🌐 Frontend URL: ${process.env.FRONTEND_URL || "http://localhost:3000"}`
