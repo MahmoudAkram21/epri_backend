@@ -1,5 +1,10 @@
+import { Router } from "express";
+import { prisma } from "../lib/prisma";
+
+const router = Router();
+
 // Get department staff (aggregates direct department staff + all laboratory staff)
-app.get("/api/departments/:id/staff", async (req, res) => {
+router.get("/departments/:id/staff", async (req, res) => {
     try {
         const { id } = req.params;
 
@@ -12,7 +17,7 @@ app.get("/api/departments/:id/staff", async (req, res) => {
         });
 
         // Get all laboratories for this department
-        const laboratories = await prisma.laboratory.findMany({
+        const laboratories = await (prisma as any).laboratory.findMany({
             where: { department_id: id },
             include: {
                 laboratoryStaffs: {
@@ -39,8 +44,8 @@ app.get("/api/departments/:id/staff", async (req, res) => {
         });
 
         // Add laboratory staff
-        laboratories.forEach((lab) => {
-            lab.laboratoryStaffs.forEach((labStaff) => {
+        laboratories.forEach((lab: any) => {
+            lab.laboratoryStaffs.forEach((labStaff: any) => {
                 const staffId = labStaff.staff.id;
 
                 if (!staffMap.has(staffId)) {
@@ -70,18 +75,18 @@ app.get("/api/departments/:id/staff", async (req, res) => {
 });
 
 // Get laboratory staff
-app.get("/api/laboratories/:id/staff", async (req, res) => {
+router.get("/laboratories/:id/staff", async (req, res) => {
     try {
         const { id } = req.params;
 
-        const laboratoryStaff = await prisma.laboratoryStaff.findMany({
+        const laboratoryStaff = await (prisma as any).laboratoryStaff.findMany({
             where: { laboratory_id: id },
             include: {
                 staff: true,
             },
         });
 
-        const staff = laboratoryStaff.map((ls) => ({
+        const staff = laboratoryStaff.map((ls: any) => ({
             ...ls.staff,
             labPosition: ls.position,
         }));
@@ -92,3 +97,5 @@ app.get("/api/laboratories/:id/staff", async (req, res) => {
         res.status(500).json({ message: "Failed to fetch laboratory staff" });
     }
 });
+
+export default router;
